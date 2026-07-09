@@ -1,18 +1,17 @@
-"""Benchmark fraud models by accuracy and memory footprint across CPU and GPU.
+"""Benchmark fraud models across CPU, older CUDA GPU, and latest CUDA GPU.
 
 Expected input file:
   data/creditcard.csv
 
-This benchmark compares a compact logistic model against a wider MLP on:
+This benchmark reports only metrics that can be produced consistently across all three environments:
   - accuracy
   - precision
   - recall
   - F1 score
   - parameter count
   - model size in MB
-  - peak CUDA memory in MB when CUDA is available
 
-The benchmark can run on CPU, GPU, or both. It does not report runtime speed.
+The benchmark does not report runtime speed or CUDA-only memory metrics.
 It also prints environment metadata so results can be compared across CPU,
 older CUDA GPU environments, and latest CUDA GPU environments.
 """
@@ -31,8 +30,6 @@ from src.metrics import (
     binary_classification_metrics,
     model_size_mb,
     parameter_count,
-    peak_memory_mb,
-    reset_peak_memory,
 )
 
 
@@ -140,7 +137,6 @@ def evaluate_model(
     x_test: torch.Tensor,
     y_test: torch.Tensor,
 ) -> dict[str, float | int | str]:
-    reset_peak_memory(device_name)
     model.eval()
     with torch.no_grad():
         logits = model(x_test)
@@ -156,7 +152,6 @@ def evaluate_model(
         "f1": metrics.f1,
         "parameters": parameter_count(model),
         "model_size_mb": model_size_mb(model),
-        "peak_memory_mb": peak_memory_mb(device_name),
     }
 
 
@@ -194,7 +189,6 @@ def run_for_device(
     rows = []
     for name, model in build_models(x_train.shape[1]):
         model = model.to(device_name)
-        reset_peak_memory(device_name)
         trained_model = train_model(model, x_train, y_train, epochs, learning_rate)
         rows.append(evaluate_model(benchmark_label, device_name, name, trained_model, x_test, y_test))
     return rows
@@ -208,8 +202,8 @@ def print_environment(summary: dict[str, str]) -> None:
 
 
 def print_markdown_table(rows: list[dict[str, float | int | str]]) -> None:
-    print("| Label | Device | Model | Accuracy | Precision | Recall | F1 | Parameters | Model size MB | Peak memory MB |")
-    print("|---|---|---|---:|---:|---:|---:|---:|---:|---:|")
+    print("| Label | Device | Model | Accuracy | Precision | Recall | F1 | Parameters | Model size MB |")
+    print("|---|---|---|---:|---:|---:|---:|---:|---:|")
     for row in rows:
         print(
             f"| {row['benchmark_label']} | "
@@ -220,13 +214,12 @@ def print_markdown_table(rows: list[dict[str, float | int | str]]) -> None:
             f"{row['recall']:.4f} | "
             f"{row['f1']:.4f} | "
             f"{row['parameters']} | "
-            f"{row['model_size_mb']:.6f} | "
-            f"{row['peak_memory_mb']:.2f} |"
+            f"{row['model_size_mb']:.6f} |"
         )
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Benchmark model accuracy and memory footprint on CPU and GPU.")
+    parser = argparse.ArgumentParser(description="Benchmark model quality and footprint across CPU and CUDA environments.")
     parser.add_argument("--csv", type=Path, default=Path("data/creditcard.csv"))
     parser.add_argument("--epochs", type=int, default=20)
     parser.add_argument("--learning-rate", type=float, default=0.01)
