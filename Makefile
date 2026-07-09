@@ -1,4 +1,5 @@
 PYTHON ?= python
+RESULT_DIR ?= benchmarks/measured
 
 install:
 	$(PYTHON) -m pip install --upgrade pip
@@ -17,22 +18,28 @@ score:
 	$(PYTHON) examples/anomaly_score_gpu.py
 
 benchmark:
-	$(PYTHON) benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device both --label local-run
+	mkdir -p $(RESULT_DIR)
+	$(PYTHON) benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device both --label local-run --output $(RESULT_DIR)/local-run.md
 
 benchmark-cpu:
-	$(PYTHON) benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device cpu --label cpu-baseline
+	mkdir -p $(RESULT_DIR)
+	$(PYTHON) benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device cpu --label cpu-baseline --output $(RESULT_DIR)/cpu-baseline.md
 
 benchmark-gpu:
-	$(PYTHON) benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device cuda --label cuda-gpu
+	mkdir -p $(RESULT_DIR)
+	$(PYTHON) benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device cuda --label cuda-gpu --output $(RESULT_DIR)/cuda-gpu.md
 
 benchmark-cuda-old:
-	$(PYTHON) benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device cuda --label cuda-12-old
+	mkdir -p $(RESULT_DIR)
+	$(PYTHON) benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device cuda --label cuda-12-old --output $(RESULT_DIR)/cuda-12-old.md
 
 benchmark-cuda-latest:
-	$(PYTHON) benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device cuda --label cuda-13-latest
+	mkdir -p $(RESULT_DIR)
+	$(PYTHON) benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device cuda --label cuda-13-latest --output $(RESULT_DIR)/cuda-13-latest.md
 
 quality-memory:
-	$(PYTHON) benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device both --label local-run
+	mkdir -p $(RESULT_DIR)
+	$(PYTHON) benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device both --label local-run --output $(RESULT_DIR)/local-run.md
 
 creditcard:
 	$(PYTHON) examples/public_creditcard_fraud_gpu.py --csv data/creditcard.csv
@@ -65,7 +72,15 @@ docker-smoke-cuda12:
 	docker run --rm --gpus all cuda13-graph-ai-fraud-detection:cuda12
 
 docker-benchmark-cuda13:
-	docker run --rm --gpus all -v $(PWD)/data:/app/data cuda13-graph-ai-fraud-detection:cuda13 python3 benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device cuda --label cuda-13-latest
+	mkdir -p $(RESULT_DIR)
+	docker run --rm --gpus all -v $(PWD)/data:/app/data -v $(PWD)/$(RESULT_DIR):/app/$(RESULT_DIR) cuda13-graph-ai-fraud-detection:cuda13 python3 benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device cuda --label cuda-13-latest --output $(RESULT_DIR)/cuda-13-latest.md
 
 docker-benchmark-cuda12:
-	docker run --rm --gpus all -v $(PWD)/data:/app/data cuda13-graph-ai-fraud-detection:cuda12 python3 benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device cuda --label cuda-12-old
+	mkdir -p $(RESULT_DIR)
+	docker run --rm --gpus all -v $(PWD)/data:/app/data -v $(PWD)/$(RESULT_DIR):/app/$(RESULT_DIR) cuda13-graph-ai-fraud-detection:cuda12 python3 benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device cuda --label cuda-12-old --output $(RESULT_DIR)/cuda-12-old.md
+
+benchmark-all-docker:
+	make docker-build-cuda12
+	make docker-build-cuda13
+	make docker-benchmark-cuda12
+	make docker-benchmark-cuda13
