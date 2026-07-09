@@ -24,15 +24,13 @@ Per-run timings:
 | 2 | 0.3953s |
 | 3 | 0.3022s |
 
-### Sample CUDA GPU result
-
-Important: the GPU row below is a clearly marked sample result format for documentation and should be replaced with a measured result from your own CUDA 13 machine.
+### Pending measured CUDA GPU result
 
 | Environment | GPU | CUDA | CPU time | GPU time | Speedup | Notes |
 |---|---|---|---:|---:|---:|---|
-| Sample CUDA 13 GPU benchmark | NVIDIA GPU, replace with exact model | 13.x | 0.3642s | 0.0450s | 8.09x | Illustrative sample only; not measured in this environment |
+| Local CUDA 13 GPU | TBD | 13.x | TBD | TBD | TBD | Replace with measured result from a real NVIDIA GPU machine |
 
-Replace the sample row after running on a real CUDA-enabled machine:
+Run on a real CUDA-enabled machine:
 
 ```bash
 nvidia-smi
@@ -80,8 +78,36 @@ Suggested reporting format:
 |---|---:|---:|---:|---:|---|
 | Local CUDA 13 GPU | TBD | TBD | TBD | TBD | Public Elliptic graph dataset |
 
+## RAPIDS cuGraph Elliptic example
+
+Run in a RAPIDS environment:
+
+```bash
+python examples/rapids_cugraph_elliptic.py --data-dir data/elliptic_bitcoin_dataset
+```
+
+Suggested reporting format:
+
+| Environment | GPU | Nodes | Edges | PageRank time | Degree time | Notes |
+|---|---|---:|---:|---:|---:|---|
+| Local RAPIDS CUDA environment | TBD | TBD | TBD | TBD | TBD | Public Elliptic graph dataset |
+
+## PyTorch Geometric GNN baseline
+
+Run in a PyTorch Geometric environment:
+
+```bash
+python examples/pyg_gnn_elliptic_baseline.py --data-dir data/elliptic_bitcoin_dataset
+```
+
+Suggested reporting format:
+
+| Environment | GPU | Nodes | Edges | Known labels | Accuracy | Notes |
+|---|---|---:|---:|---:|---:|---|
+| Local CUDA 13 PyG environment | TBD | TBD | TBD | TBD | TBD | GraphSAGE baseline |
+
 ## Interpretation
 
-The CPU numeric result is measured in a CPU-only environment. The sample GPU row is not measured here and should be replaced with a real CUDA 13 GPU run before using it as performance evidence. For CUDA visibility, report GPU model, driver version, CUDA version, PyTorch CUDA version, and hardware details.
+The CPU numeric result is measured in a CPU-only environment. CUDA GPU, RAPIDS cuGraph, and PyTorch Geometric GNN results should be added only after running on a real GPU machine. Report GPU model, driver version, CUDA version, PyTorch CUDA version, and hardware details.
 
 Do not compare numbers across different GPUs or CPUs without reporting hardware details.
