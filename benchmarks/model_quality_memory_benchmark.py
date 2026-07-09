@@ -3,15 +3,18 @@
 Expected input file:
   data/creditcard.csv
 
-This benchmark reports only metrics that can be produced consistently across all three environments:
+This benchmark reports quality, footprint, and execution metrics:
   - accuracy
   - precision
   - recall
   - F1 score
   - parameter count
   - model size in MB
+  - training runtime seconds
+  - inference runtime milliseconds
+  - inference throughput examples/second
+  - peak CUDA memory MB when CUDA is used
 
-The benchmark does not report runtime speed or CUDA-only memory metrics.
 It also prints environment metadata so results can be compared across CPU,
 older CUDA GPU environments, and latest CUDA GPU environments.
 """
@@ -20,6 +23,7 @@ from __future__ import annotations
 
 import argparse
 import platform
+import time
 from pathlib import Path
 
 import pandas as pd
@@ -30,6 +34,8 @@ from src.metrics import (
     binary_classification_metrics,
     model_size_mb,
     parameter_count,
+    peak_memory_mb,
+    reset_peak_memory,
 )
 
 
@@ -91,6 +97,11 @@ def build_models(num_features: int) -> list[tuple[str, nn.Module]]:
     ]
 
 
+def _synchronize_if_cuda(device_name: str) -> None:
+    if device_name == "cuda" and torch.cuda.is_available():
+        torch.cuda.synchronize()
+
+
 def train_model(model: nn.Module, x_train: torch.Tensor, y_train: torch.Tensor, epochs: int, lr: float) -> nn.Module:
     negative_count = (y_train == 0).sum()
     positive_count = (y_train == 1).sum()
@@ -136,11 +147,20 @@ def evaluate_model(
     model: nn.Module,
     x_test: torch.Tensor,
     y_test: torch.Tensor,
+    train_runtime_seconds: float,
+    peak_memory_after_train_mb: float,
 ) -> dict[str, float | int | str]:
     model.eval()
+    _synchronize_if_cuda(device_name)
+    inference_start = time.perf_counter()
     with torch.no_grad():
         logits = model(x_test)
+        _synchronize_if_cuda(device_name)
+        inference_runtime_seconds = time.perf_counter() - inference_start
         metrics = binary_classification_metrics(logits, y_test)
+
+    inference_runtime_ms = inference_runtime_seconds * 1000
+    examples_per_second = float(x_test.shape[0]) / max(inference_runtime_seconds, 1e-12)
 
     return {
         "benchmark_label": benchmark_label,
@@ -152,19 +172,26 @@ def evaluate_model(
         "f1": metrics.f1,
         "parameters": parameter_count(model),
         "model_size_mb": model_size_mb(model),
+        "train_runtime_seconds": train_runtime_seconds,
+        "inference_runtime_ms": inference_runtime_ms,
+        "examples_per_second": examples_per_second,
+        "peak_cuda_memory_mb": peak_memory_after_train_mb,
     }
 
 
-def resolve_devices(mode: str) -> list[str]:
+def resolve_devices(mode: str, require_cuda: bool = False) -> list[str]:
+    cuda_available = torch.cuda.is_available()
+    if require_cuda and not cuda_available:
+        raise RuntimeError("CUDA is required but torch.cuda.is_available() is False.")
     if mode == "cpu":
         return ["cpu"]
     if mode == "cuda":
-        if not torch.cuda.is_available():
+        if not cuda_available:
             raise RuntimeError("CUDA requested but torch.cuda.is_available() is False.")
         return ["cuda"]
     if mode == "both":
         devices = ["cpu"]
-        if torch.cuda.is_available():
+        if cuda_available:
             devices.append("cuda")
         return devices
     raise ValueError(f"Unsupported device mode: {mode}")
@@ -190,8 +217,25 @@ def run_for_device(
     rows = []
     for name, model in build_models(x_train.shape[1]):
         model = model.to(device_name)
+        reset_peak_memory(device_name)
+        _synchronize_if_cuda(device_name)
+        train_start = time.perf_counter()
         trained_model = train_model(model, x_train, y_train, epochs, learning_rate)
-        rows.append(evaluate_model(benchmark_label, device_name, name, trained_model, x_test, y_test))
+        _synchronize_if_cuda(device_name)
+        train_runtime_seconds = time.perf_counter() - train_start
+        peak_after_train_mb = peak_memory_mb(device_name)
+        rows.append(
+            evaluate_model(
+                benchmark_label,
+                device_name,
+                name,
+                trained_model,
+                x_test,
+                y_test,
+                train_runtime_seconds,
+                peak_after_train_mb,
+            )
+        )
     return rows
 
 
@@ -204,8 +248,8 @@ def render_environment(summary: dict[str, str]) -> str:
 
 def render_markdown_table(rows: list[dict[str, float | int | str]]) -> str:
     lines = [
-        "| Label | Device | Model | Accuracy | Precision | Recall | F1 | Parameters | Model size MB |",
-        "|---|---|---|---:|---:|---:|---:|---:|---:|",
+        "| Label | Device | Model | Accuracy | Precision | Recall | F1 | Parameters | Model size MB | Train seconds | Inference ms | Examples/sec | Peak CUDA memory MB |",
+        "|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for row in rows:
         lines.append(
@@ -217,13 +261,17 @@ def render_markdown_table(rows: list[dict[str, float | int | str]]) -> str:
             f"{row['recall']:.4f} | "
             f"{row['f1']:.4f} | "
             f"{row['parameters']} | "
-            f"{row['model_size_mb']:.6f} |"
+            f"{row['model_size_mb']:.6f} | "
+            f"{row['train_runtime_seconds']:.4f} | "
+            f"{row['inference_runtime_ms']:.4f} | "
+            f"{row['examples_per_second']:.2f} | "
+            f"{row['peak_cuda_memory_mb']:.2f} |"
         )
     return "\n".join(lines)
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Benchmark model quality and footprint across CPU and CUDA environments.")
+    parser = argparse.ArgumentParser(description="Benchmark model quality, footprint, runtime, and memory across CPU and CUDA environments.")
     parser.add_argument("--csv", type=Path, default=Path("data/creditcard.csv"))
     parser.add_argument("--epochs", type=int, default=20)
     parser.add_argument("--learning-rate", type=float, default=0.01)
@@ -240,6 +288,11 @@ def main() -> None:
         help="Benchmark label, for example cpu-baseline, cuda-12-old, or cuda-13-latest.",
     )
     parser.add_argument(
+        "--require-cuda",
+        action="store_true",
+        help="Fail if CUDA is not available. Useful for GPU CI and CUDA-specific benchmark runs.",
+    )
+    parser.add_argument(
         "--output",
         type=Path,
         default=None,
@@ -248,7 +301,7 @@ def main() -> None:
     args = parser.parse_args()
 
     x, y = load_dataset(args.csv)
-    devices = resolve_devices(args.device)
+    devices = resolve_devices(args.device, require_cuda=args.require_cuda)
 
     all_results = []
     for device_name in devices:
