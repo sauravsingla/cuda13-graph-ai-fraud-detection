@@ -12,9 +12,9 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-COPY requirements.txt .
+COPY requirements*.txt ./
 RUN python3 -m pip install --upgrade pip --break-system-packages && \
-    python3 -m pip install -r requirements.txt --break-system-packages
+    python3 -m pip install -r requirements-cuda13.txt --break-system-packages
 
 COPY . .
 
