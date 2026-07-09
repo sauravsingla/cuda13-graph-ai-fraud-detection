@@ -17,13 +17,22 @@ score:
 	$(PYTHON) examples/anomaly_score_gpu.py
 
 benchmark:
-	$(PYTHON) benchmarks/cpu_vs_gpu_benchmark.py
+	$(PYTHON) benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv
+
+quality-memory:
+	$(PYTHON) benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv
 
 creditcard:
 	$(PYTHON) examples/public_creditcard_fraud_gpu.py --csv data/creditcard.csv
 
 elliptic:
 	$(PYTHON) examples/elliptic_graph_loader.py --data-dir data/elliptic_bitcoin_dataset
+
+rapids-elliptic:
+	$(PYTHON) examples/rapids_cugraph_elliptic.py --data-dir data/elliptic_bitcoin_dataset
+
+pyg-elliptic:
+	$(PYTHON) examples/pyg_gnn_elliptic_baseline.py --data-dir data/elliptic_bitcoin_dataset
 
 docker-build:
 	docker build -f Dockerfile.cuda13 -t cuda13-graph-ai-fraud-detection:latest .
