@@ -2,9 +2,29 @@
 
 This repository does not commit public datasets directly. Download datasets from their official public pages and place them under `data/`.
 
+## Dataset source and license checklist
+
+Before using any dataset:
+
+- Download it from the official dataset host.
+- Review the dataset license and terms of use on the host page.
+- Do not redistribute raw data through this repository unless the dataset license explicitly allows it.
+- Record the dataset source, download date, and version in any benchmark report.
+
 ## Option 1: ULB/Kaggle Credit Card Fraud Detection
 
-Use this dataset when you want a quick tabular fraud-detection example and a model quality / memory-footprint benchmark.
+Use this dataset when you want a quick tabular fraud-detection example and a model-quality / model-footprint benchmark.
+
+Known public reference details:
+
+| Item | Detail |
+|---|---|
+| Common host | Kaggle Credit Card Fraud Detection dataset |
+| Academic source family | ULB / Worldline credit-card fraud data used in public studies |
+| Commonly reported size | 284,807 transactions |
+| Commonly reported fraud labels | 492 fraud cases |
+| Required local file | `data/creditcard.csv` |
+| License guidance | Check the active Kaggle dataset page before use or redistribution |
 
 Expected path:
 
@@ -30,29 +50,47 @@ Or:
 make creditcard
 ```
 
-Run the model quality and memory benchmark:
+Run the model-quality and model-footprint benchmark:
 
 ```bash
-python benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv
+python benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device cpu --label cpu-baseline
 ```
 
 Or:
 
 ```bash
-make benchmark
+make benchmark-cpu
+```
+
+Run CUDA comparison after building CUDA containers:
+
+```bash
+make docker-build-cuda12
+make docker-build-cuda13
+make docker-benchmark-cuda12
+make docker-benchmark-cuda13
 ```
 
 Notes:
 
-- The example trains a compact PyTorch logistic classifier.
-- The benchmark compares compact and wider models.
-- It uses GPU automatically when CUDA is available.
+- The benchmark compares compact and wider PyTorch models.
 - It uses positive-class weighting to handle fraud-class imbalance.
-- It reports accuracy, precision, recall, F1, parameter count, model size, and peak CUDA memory.
+- It reports accuracy, precision, recall, F1, parameter count, and model size.
+- It intentionally does not report speed, throughput, peak CUDA memory, GPU utilization, or CUDA kernel timing.
 
 ## Option 2: Elliptic Bitcoin Transaction Graph Dataset
 
 Use this dataset when you want a graph-style AML/fraud analytics example.
+
+Known public reference details:
+
+| Item | Detail |
+|---|---|
+| Common host | Elliptic Bitcoin transaction graph dataset public releases / Kaggle mirrors |
+| Task type | AML / illicit transaction node classification |
+| Required local directory | `data/elliptic_bitcoin_dataset/` |
+| Required files | features, classes, edgelist CSV files |
+| License guidance | Check the active dataset host before use or redistribution |
 
 Expected directory:
 
@@ -99,7 +137,7 @@ Notes:
 - It computes GPU-friendly in-degree and out-degree features.
 - The cuGraph example computes PageRank and degree features on GPU.
 - The PyG example trains a simple GraphSAGE node-classification baseline on known labels.
-- Future benchmark results should report accuracy, parameters, model size, and peak CUDA memory, not only speed.
+- Future benchmark results should report the same common metrics used by the main benchmark where applicable: accuracy, precision, recall, F1, parameters, and model size.
 
 ## Why datasets are not committed
 
