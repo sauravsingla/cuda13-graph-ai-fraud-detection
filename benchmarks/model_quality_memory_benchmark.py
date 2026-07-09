@@ -76,8 +76,8 @@ def load_dataset(csv_path: Path) -> tuple[torch.Tensor, torch.Tensor]:
     return x, y
 
 
-def split_train_test(x: torch.Tensor, y: torch.Tensor, train_ratio: float = 0.8):
-    generator = torch.Generator().manual_seed(42)
+def split_train_test(x: torch.Tensor, y: torch.Tensor, train_ratio: float = 0.8, seed: int = 42):
+    generator = torch.Generator().manual_seed(seed)
     indices = torch.randperm(x.shape[0], generator=generator)
     split = int(train_ratio * x.shape[0])
     train_idx, test_idx = indices[:split], indices[split:]
@@ -177,9 +177,10 @@ def run_for_device(
     y: torch.Tensor,
     epochs: int,
     learning_rate: float,
+    seed: int,
 ) -> list[dict[str, float | int | str]]:
-    torch.manual_seed(42)
-    x_train, y_train, x_test, y_test = split_train_test(x, y)
+    torch.manual_seed(seed)
+    x_train, y_train, x_test, y_test = split_train_test(x, y, seed=seed)
 
     x_train = x_train.to(device_name)
     y_train = y_train.to(device_name)
@@ -194,18 +195,20 @@ def run_for_device(
     return rows
 
 
-def print_environment(summary: dict[str, str]) -> None:
-    print("## Environment")
-    for key, value in summary.items():
-        print(f"{key}: {value}")
-    print()
+def render_environment(summary: dict[str, str]) -> str:
+    lines = ["## Environment"]
+    lines.extend(f"{key}: {value}" for key, value in summary.items())
+    lines.append("")
+    return "\n".join(lines)
 
 
-def print_markdown_table(rows: list[dict[str, float | int | str]]) -> None:
-    print("| Label | Device | Model | Accuracy | Precision | Recall | F1 | Parameters | Model size MB |")
-    print("|---|---|---|---:|---:|---:|---:|---:|---:|")
+def render_markdown_table(rows: list[dict[str, float | int | str]]) -> str:
+    lines = [
+        "| Label | Device | Model | Accuracy | Precision | Recall | F1 | Parameters | Model size MB |",
+        "|---|---|---|---:|---:|---:|---:|---:|---:|",
+    ]
     for row in rows:
-        print(
+        lines.append(
             f"| {row['benchmark_label']} | "
             f"{row['device']} | "
             f"{row['model']} | "
@@ -216,6 +219,7 @@ def print_markdown_table(rows: list[dict[str, float | int | str]]) -> None:
             f"{row['parameters']} | "
             f"{row['model_size_mb']:.6f} |"
         )
+    return "\n".join(lines)
 
 
 def main() -> None:
@@ -223,6 +227,7 @@ def main() -> None:
     parser.add_argument("--csv", type=Path, default=Path("data/creditcard.csv"))
     parser.add_argument("--epochs", type=int, default=20)
     parser.add_argument("--learning-rate", type=float, default=0.01)
+    parser.add_argument("--seed", type=int, default=42, help="Random seed used for split and model initialization.")
     parser.add_argument(
         "--device",
         choices=["cpu", "cuda", "both"],
@@ -234,6 +239,12 @@ def main() -> None:
         default="local-run",
         help="Benchmark label, for example cpu-baseline, cuda-12-old, or cuda-13-latest.",
     )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=None,
+        help="Optional path to save the rendered markdown benchmark output.",
+    )
     args = parser.parse_args()
 
     x, y = load_dataset(args.csv)
@@ -241,15 +252,24 @@ def main() -> None:
 
     all_results = []
     for device_name in devices:
-        all_results.extend(run_for_device(args.label, device_name, x, y, args.epochs, args.learning_rate))
+        all_results.extend(run_for_device(args.label, device_name, x, y, args.epochs, args.learning_rate, args.seed))
 
-    print_environment(environment_summary(args.label))
-    print("Rows:", x.shape[0])
-    print("Fraud labels:", int(y.sum().item()))
-    print("Devices evaluated:", ", ".join(devices))
+    sections = [
+        render_environment(environment_summary(args.label)),
+        f"Rows: {x.shape[0]}",
+        f"Fraud labels: {int(y.sum().item())}",
+        f"Devices evaluated: {', '.join(devices)}",
+    ]
     if "cuda" not in devices:
-        print("CUDA evaluated: No")
-    print_markdown_table(all_results)
+        sections.append("CUDA evaluated: No")
+    sections.append(render_markdown_table(all_results))
+
+    rendered_output = "\n".join(sections) + "\n"
+    print(rendered_output)
+
+    if args.output is not None:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(rendered_output, encoding="utf-8")
 
 
 if __name__ == "__main__":
