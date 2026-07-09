@@ -1,4 +1,4 @@
-"""Train a small GPU-friendly fraud classifier on the public ULB/Kaggle credit-card fraud dataset.
+"""Train a compact GPU-friendly fraud classifier on the public ULB/Kaggle credit-card fraud dataset.
 
 Expected input file:
   data/creditcard.csv
@@ -17,6 +17,14 @@ from pathlib import Path
 import pandas as pd
 import torch
 from torch import nn
+
+from src.metrics import (
+    binary_classification_metrics,
+    model_size_mb,
+    parameter_count,
+    peak_memory_mb,
+    reset_peak_memory,
+)
 
 
 FEATURE_COLUMNS = ["Time"] + [f"V{i}" for i in range(1, 29)] + ["Amount"]
@@ -59,22 +67,6 @@ def split_train_test(x: torch.Tensor, y: torch.Tensor, train_ratio: float = 0.8)
     return x[train_idx], y[train_idx], x[test_idx], y[test_idx]
 
 
-def evaluate(logits: torch.Tensor, labels: torch.Tensor) -> dict[str, float]:
-    probabilities = torch.sigmoid(logits)
-    predictions = (probabilities >= 0.5).float()
-
-    tp = ((predictions == 1) & (labels == 1)).sum().item()
-    fp = ((predictions == 1) & (labels == 0)).sum().item()
-    fn = ((predictions == 0) & (labels == 1)).sum().item()
-    tn = ((predictions == 0) & (labels == 0)).sum().item()
-
-    precision = tp / (tp + fp + 1e-9)
-    recall = tp / (tp + fn + 1e-9)
-    accuracy = (tp + tn) / (tp + tn + fp + fn + 1e-9)
-
-    return {"accuracy": accuracy, "precision": precision, "recall": recall}
-
-
 def train(csv_path: Path, epochs: int, learning_rate: float) -> None:
     device = "cuda" if torch.cuda.is_available() else "cpu"
     x, y = load_dataset(csv_path)
@@ -93,6 +85,7 @@ def train(csv_path: Path, epochs: int, learning_rate: float) -> None:
 
     loss_fn = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    reset_peak_memory(device)
 
     for epoch in range(1, epochs + 1):
         model.train()
@@ -106,16 +99,19 @@ def train(csv_path: Path, epochs: int, learning_rate: float) -> None:
             model.eval()
             with torch.no_grad():
                 test_logits = model(x_test)
-                metrics = evaluate(test_logits, y_test)
+                metrics = binary_classification_metrics(test_logits, y_test)
             print(
                 f"epoch={epoch:03d} loss={loss.item():.4f} "
-                f"accuracy={metrics['accuracy']:.4f} "
-                f"precision={metrics['precision']:.4f} recall={metrics['recall']:.4f}"
+                f"accuracy={metrics.accuracy:.4f} precision={metrics.precision:.4f} "
+                f"recall={metrics.recall:.4f} f1={metrics.f1:.4f}"
             )
 
     print("Device:", device)
     print("Rows:", x.shape[0])
     print("Fraud labels:", int(y.sum().item()))
+    print("Model parameters:", parameter_count(model))
+    print("Model size MB:", f"{model_size_mb(model):.6f}")
+    print("Peak CUDA memory MB:", f"{peak_memory_mb(device):.2f}")
 
 
 def parse_args() -> argparse.Namespace:
