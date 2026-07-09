@@ -17,10 +17,16 @@ score:
 	$(PYTHON) examples/anomaly_score_gpu.py
 
 benchmark:
-	$(PYTHON) benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv
+	$(PYTHON) benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device both
+
+benchmark-cpu:
+	$(PYTHON) benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device cpu
+
+benchmark-gpu:
+	$(PYTHON) benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device cuda
 
 quality-memory:
-	$(PYTHON) benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv
+	$(PYTHON) benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device both
 
 creditcard:
 	$(PYTHON) examples/public_creditcard_fraud_gpu.py --csv data/creditcard.csv
