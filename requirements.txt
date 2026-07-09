@@ -1,4 +1,1 @@
-torch
-numpy
-pandas
-pytest
+-r requirements-cpu.txt
