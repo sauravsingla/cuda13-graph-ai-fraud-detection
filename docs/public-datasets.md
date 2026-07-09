@@ -24,6 +24,12 @@ Run:
 python examples/public_creditcard_fraud_gpu.py --csv data/creditcard.csv
 ```
 
+Or:
+
+```bash
+make creditcard
+```
+
 Notes:
 
 - The example trains a small PyTorch logistic classifier.
@@ -49,10 +55,28 @@ elliptic_txs_classes.csv
 elliptic_txs_edgelist.csv
 ```
 
-Run:
+Run the basic PyTorch loader:
 
 ```bash
 python examples/elliptic_graph_loader.py --data-dir data/elliptic_bitcoin_dataset
+```
+
+Or:
+
+```bash
+make elliptic
+```
+
+Run RAPIDS cuGraph feature extraction in a RAPIDS environment:
+
+```bash
+python examples/rapids_cugraph_elliptic.py --data-dir data/elliptic_bitcoin_dataset
+```
+
+Run the PyTorch Geometric GraphSAGE baseline in a PyG environment:
+
+```bash
+python examples/pyg_gnn_elliptic_baseline.py --data-dir data/elliptic_bitcoin_dataset
 ```
 
 Notes:
@@ -60,8 +84,12 @@ Notes:
 - The loader builds a transaction-id mapping.
 - It loads node features, labels, and directed transaction edges.
 - It computes GPU-friendly in-degree and out-degree features.
+- The cuGraph example computes PageRank and degree features on GPU.
+- The PyG example trains a simple GraphSAGE node-classification baseline on known labels.
 - This is a starting point for graph neural networks, cuGraph, or temporal graph methods.
 
 ## Why datasets are not committed
 
 Fraud datasets can be large and may have separate licensing or usage terms. Keeping data outside the repo avoids accidental redistribution and keeps the repository lightweight.
+
+The `.gitignore` file excludes `data/`, CSV files, model artifacts, logs, and other generated outputs.
