@@ -17,6 +17,7 @@ Fraud and mule-risk detection systems need models that are accurate, explainable
 - CUDA 13 Docker environment
 - GPU smoke test
 - CPU vs GPU model accuracy and memory-footprint benchmark
+- Benchmark matrix for CPU, older CUDA GPU, and latest CUDA GPU environments
 - Synthetic transaction graph generator
 - Public credit-card fraud dataset example
 - Public Elliptic Bitcoin transaction graph loader
@@ -88,6 +89,9 @@ make install
 make test
 make smoke
 make benchmark
+make benchmark-cpu
+make benchmark-cuda-old
+make benchmark-cuda-latest
 make creditcard
 make elliptic
 make rapids-elliptic
@@ -109,25 +113,35 @@ Primary benchmark metrics:
 - CPU memory footprint through model size
 - peak CUDA memory in MB when CUDA is available
 
-Run CPU and GPU when CUDA is available:
+Benchmark matrix:
 
-```bash
-python benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device both
+```text
+CPU baseline
+GPU with older CUDA environment, recommended label: cuda-12-old
+GPU with latest CUDA 13.3 / 13.3 Update 1 aligned environment, label: cuda-13-latest
 ```
 
-Run CPU only:
+Run CPU baseline:
 
 ```bash
-python benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device cpu
+python benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device cpu --label cpu-baseline
 ```
 
-Run CUDA GPU only:
+Run older CUDA GPU environment:
 
 ```bash
-python benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device cuda
+python benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device cuda --label cuda-12-old
 ```
 
-This compares a compact logistic fraud model against a wider MLP and reports the trade-off between model quality and memory footprint on CPU and GPU.
+Run latest CUDA GPU environment:
+
+```bash
+python benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device cuda --label cuda-13-latest
+```
+
+This compares a compact logistic fraud model against a wider MLP and reports the trade-off between model quality and memory footprint on CPU, older CUDA GPU, and latest CUDA GPU environments.
+
+Full execution guide: [`docs/benchmark-execution-matrix.md`](docs/benchmark-execution-matrix.md)
 
 ## Public dataset examples
 
@@ -191,14 +205,16 @@ More details: [`docs/public-datasets.md`](docs/public-datasets.md)
 flowchart LR
     A[Public or synthetic dataset] --> B[Graph loader]
     B --> C[CPU model evaluation]
-    B --> D[CUDA GPU model evaluation]
-    B --> E[RAPIDS cuGraph features]
-    B --> F[PyTorch Geometric GNN baseline]
-    C --> G[Accuracy and memory metrics]
-    D --> G
-    E --> G
-    F --> G
-    G --> H[Docker and Kubernetes deployment reference]
+    B --> D[Older CUDA GPU model evaluation]
+    B --> E[Latest CUDA GPU model evaluation]
+    B --> F[RAPIDS cuGraph features]
+    B --> G[PyTorch Geometric GNN baseline]
+    C --> H[Accuracy and memory metrics]
+    D --> H
+    E --> H
+    F --> H
+    G --> H
+    H --> I[Docker and Kubernetes deployment reference]
 ```
 
 ## Project structure
@@ -226,6 +242,7 @@ cuda13-graph-ai-fraud-detection/
     results.md
   docs/
     architecture.md
+    benchmark-execution-matrix.md
     cuda13-migration-notes.md
     cuda-version-support.md
     public-datasets.md
@@ -247,6 +264,7 @@ This repository uses synthetic and public fraud-style datasets to demonstrate GP
 - mule-risk style network analytics
 - public fraud dataset experimentation
 - CPU vs GPU accuracy, F1, and memory-footprint benchmarking
+- older CUDA vs latest CUDA GPU benchmark comparison
 - RAPIDS/cuGraph graph features
 - GraphSAGE baseline modeling
 
@@ -254,7 +272,7 @@ The synthetic data does not contain real payment data. Public datasets should be
 
 ## Contribution roadmap
 
-- [ ] Add measured CUDA 13 GPU memory benchmark results
+- [ ] Add measured CPU baseline, old CUDA GPU, and latest CUDA GPU benchmark results
 - [ ] Add public-dataset CPU vs GPU accuracy and F1 benchmark results
 - [ ] Add compact GNN memory comparison
 - [ ] Add custom CUDA kernel example for memory-efficient edge aggregation
