@@ -26,4 +26,14 @@ jobs:
         run: pytest tests/
 
       - name: Run CPU fallback smoke test
-        run: python examples/gpu_smoke_test.py
+        run: SMOKE_MATRIX_SIZE=128 python examples/gpu_smoke_test.py
+
+  docker-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build CUDA 13 Docker image
+        run: docker build -f Dockerfile.cuda13 -t cuda13-graph-ai-fraud-detection:cuda13 .
