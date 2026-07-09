@@ -31,12 +31,15 @@ Fraud and mule-risk detection systems need models that are accurate, explainable
 
 | Component | Version |
 |---|---|
-| CUDA Toolkit | 13.x |
+| CUDA target | 13.x |
+| Current CUDA alignment | CUDA Toolkit 13.3 / 13.3 Update 1 notes |
 | NVIDIA CUDA Docker image | `nvidia/cuda:13.3.0-devel-ubuntu24.04` |
-| NVIDIA Driver | Use CUDA 13 compatible driver |
+| NVIDIA Driver | `>=580` for CUDA 13.x compatibility; `>=610.43.02` preferred for CUDA 13.3 / 13.3 Update 1 alignment |
 | Python | 3.10+ |
 | OS | Ubuntu 24.04 recommended |
 | Docker | NVIDIA Container Toolkit required for GPU runtime |
+
+See [`docs/cuda-version-support.md`](docs/cuda-version-support.md) for CUDA 13.3 Update 1 validation notes, component versions, and driver guidance.
 
 ## Quick start
 
@@ -210,6 +213,7 @@ cuda13-graph-ai-fraud-detection/
   docs/
     architecture.md
     cuda13-migration-notes.md
+    cuda-version-support.md
     public-datasets.md
   k8s/
     gpu-deployment.yaml
