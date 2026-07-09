@@ -1,4 +1,4 @@
-"""Benchmark fraud models by accuracy and memory footprint, not runtime speed.
+"""Benchmark fraud models by accuracy and memory footprint across CPU and GPU.
 
 Expected input file:
   data/creditcard.csv
@@ -11,6 +11,8 @@ This benchmark compares a compact logistic model against a wider MLP on:
   - parameter count
   - model size in MB
   - peak CUDA memory in MB when CUDA is available
+
+The benchmark can run on CPU, GPU, or both. It does not report runtime speed.
 """
 
 from __future__ import annotations
@@ -82,6 +84,13 @@ def split_train_test(x: torch.Tensor, y: torch.Tensor, train_ratio: float = 0.8)
     return x[train_idx], y[train_idx], x[test_idx], y[test_idx]
 
 
+def build_models(num_features: int) -> list[tuple[str, nn.Module]]:
+    return [
+        ("Compact Logistic", CompactLogisticModel(num_features)),
+        ("Wider MLP", WiderMLPModel(num_features)),
+    ]
+
+
 def train_model(model: nn.Module, x_train: torch.Tensor, y_train: torch.Tensor, epochs: int, lr: float) -> nn.Module:
     negative_count = (y_train == 0).sum()
     positive_count = (y_train == 1).sum()
@@ -101,14 +110,21 @@ def train_model(model: nn.Module, x_train: torch.Tensor, y_train: torch.Tensor, 
     return model
 
 
-def evaluate_model(name: str, model: nn.Module, x_test: torch.Tensor, y_test: torch.Tensor, device: str) -> dict[str, float | int | str]:
-    reset_peak_memory(device)
+def evaluate_model(
+    device_name: str,
+    name: str,
+    model: nn.Module,
+    x_test: torch.Tensor,
+    y_test: torch.Tensor,
+) -> dict[str, float | int | str]:
+    reset_peak_memory(device_name)
     model.eval()
     with torch.no_grad():
         logits = model(x_test)
         metrics = binary_classification_metrics(logits, y_test)
 
     return {
+        "device": device_name,
         "model": name,
         "accuracy": metrics.accuracy,
         "precision": metrics.precision,
@@ -116,16 +132,56 @@ def evaluate_model(name: str, model: nn.Module, x_test: torch.Tensor, y_test: to
         "f1": metrics.f1,
         "parameters": parameter_count(model),
         "model_size_mb": model_size_mb(model),
-        "peak_memory_mb": peak_memory_mb(device),
+        "peak_memory_mb": peak_memory_mb(device_name),
     }
 
 
+def resolve_devices(mode: str) -> list[str]:
+    if mode == "cpu":
+        return ["cpu"]
+    if mode == "cuda":
+        if not torch.cuda.is_available():
+            raise RuntimeError("CUDA requested but torch.cuda.is_available() is False.")
+        return ["cuda"]
+    if mode == "both":
+        devices = ["cpu"]
+        if torch.cuda.is_available():
+            devices.append("cuda")
+        return devices
+    raise ValueError(f"Unsupported device mode: {mode}")
+
+
+def run_for_device(
+    device_name: str,
+    x: torch.Tensor,
+    y: torch.Tensor,
+    epochs: int,
+    learning_rate: float,
+) -> list[dict[str, float | int | str]]:
+    torch.manual_seed(42)
+    x_train, y_train, x_test, y_test = split_train_test(x, y)
+
+    x_train = x_train.to(device_name)
+    y_train = y_train.to(device_name)
+    x_test = x_test.to(device_name)
+    y_test = y_test.to(device_name)
+
+    rows = []
+    for name, model in build_models(x_train.shape[1]):
+        model = model.to(device_name)
+        reset_peak_memory(device_name)
+        trained_model = train_model(model, x_train, y_train, epochs, learning_rate)
+        rows.append(evaluate_model(device_name, name, trained_model, x_test, y_test))
+    return rows
+
+
 def print_markdown_table(rows: list[dict[str, float | int | str]]) -> None:
-    print("| Model | Accuracy | Precision | Recall | F1 | Parameters | Model size MB | Peak memory MB |")
-    print("|---|---:|---:|---:|---:|---:|---:|---:|")
+    print("| Device | Model | Accuracy | Precision | Recall | F1 | Parameters | Model size MB | Peak memory MB |")
+    print("|---|---|---:|---:|---:|---:|---:|---:|---:|")
     for row in rows:
         print(
-            f"| {row['model']} | "
+            f"| {row['device']} | "
+            f"{row['model']} | "
             f"{row['accuracy']:.4f} | "
             f"{row['precision']:.4f} | "
             f"{row['recall']:.4f} | "
@@ -137,35 +193,31 @@ def print_markdown_table(rows: list[dict[str, float | int | str]]) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Benchmark model accuracy and memory footprint.")
+    parser = argparse.ArgumentParser(description="Benchmark model accuracy and memory footprint on CPU and GPU.")
     parser.add_argument("--csv", type=Path, default=Path("data/creditcard.csv"))
     parser.add_argument("--epochs", type=int, default=20)
     parser.add_argument("--learning-rate", type=float, default=0.01)
+    parser.add_argument(
+        "--device",
+        choices=["cpu", "cuda", "both"],
+        default="both",
+        help="Run on CPU, CUDA GPU, or both. Default runs CPU and GPU when CUDA is available.",
+    )
     args = parser.parse_args()
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
     x, y = load_dataset(args.csv)
-    x_train, y_train, x_test, y_test = split_train_test(x, y)
+    devices = resolve_devices(args.device)
 
-    x_train = x_train.to(device)
-    y_train = y_train.to(device)
-    x_test = x_test.to(device)
-    y_test = y_test.to(device)
+    all_results = []
+    for device_name in devices:
+        all_results.extend(run_for_device(device_name, x, y, args.epochs, args.learning_rate))
 
-    models: list[tuple[str, nn.Module]] = [
-        ("Compact Logistic", CompactLogisticModel(x_train.shape[1]).to(device)),
-        ("Wider MLP", WiderMLPModel(x_train.shape[1]).to(device)),
-    ]
-
-    results = []
-    for name, model in models:
-        trained_model = train_model(model, x_train, y_train, args.epochs, args.learning_rate)
-        results.append(evaluate_model(name, trained_model, x_test, y_test, device))
-
-    print("Device:", device)
     print("Rows:", x.shape[0])
     print("Fraud labels:", int(y.sum().item()))
-    print_markdown_table(results)
+    print("Devices evaluated:", ", ".join(devices))
+    if "cuda" not in devices:
+        print("CUDA evaluated: No")
+    print_markdown_table(all_results)
 
 
 if __name__ == "__main__":
