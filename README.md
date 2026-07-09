@@ -6,17 +6,17 @@
 ![CI](https://img.shields.io/badge/CI-GitHub%20Actions-black)
 ![License](https://img.shields.io/badge/License-Apache--2.0-lightgrey)
 
-CUDA 13 compatible GPU acceleration examples for graph-based fraud detection, anomaly scoring, public fraud datasets, and large-scale financial risk analytics.
+CUDA 13 compatible GPU examples for graph-based fraud detection, anomaly scoring, public fraud datasets, model accuracy benchmarking, and memory-efficient financial risk analytics.
 
 ## Why this project matters
 
-Fraud and mule-risk detection systems often need to process large transaction graphs quickly. This project demonstrates how CUDA 13.x can be used to accelerate graph feature extraction, anomaly scoring, public-dataset experimentation, benchmarking, and production-oriented AI workflows.
+Fraud and mule-risk detection systems need models that are accurate, explainable, and memory-efficient enough for production deployment. This project demonstrates how CUDA 13.x, PyTorch, RAPIDS cuGraph, and PyTorch Geometric can support graph feature extraction, anomaly scoring, model-quality evaluation, memory-footprint analysis, and production-oriented AI workflows.
 
 ## Features
 
 - CUDA 13 Docker environment
 - GPU smoke test
-- CPU vs GPU benchmark
+- Model accuracy and memory-footprint benchmark
 - Synthetic transaction graph generator
 - Public credit-card fraud dataset example
 - Public Elliptic Bitcoin transaction graph loader
@@ -75,7 +75,7 @@ pip install --upgrade pip
 pip install -r requirements.txt
 python examples/gpu_smoke_test.py
 python examples/graph_feature_gpu.py
-python benchmarks/cpu_vs_gpu_benchmark.py
+python benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv
 ```
 
 Common commands are also available through `make`:
@@ -87,7 +87,31 @@ make smoke
 make benchmark
 make creditcard
 make elliptic
+make rapids-elliptic
+make pyg-elliptic
 ```
+
+## Benchmark focus
+
+This repository benchmarks **model quality and memory footprint**, not raw execution speed.
+
+Primary benchmark metrics:
+
+- accuracy
+- precision
+- recall
+- F1 score
+- parameter count
+- model size in MB
+- peak CUDA memory in MB when CUDA is available
+
+Run:
+
+```bash
+python benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv
+```
+
+This compares a compact logistic fraud model against a wider MLP to show the trade-off between model quality and memory footprint.
 
 ## Public dataset examples
 
@@ -107,7 +131,7 @@ Run:
 python examples/public_creditcard_fraud_gpu.py --csv data/creditcard.csv
 ```
 
-This trains a small GPU-friendly PyTorch logistic classifier and reports accuracy, precision, and recall.
+This trains a compact GPU-friendly PyTorch classifier and reports accuracy, precision, recall, F1, parameter count, model size, and peak CUDA memory.
 
 ### Elliptic Bitcoin graph dataset
 
@@ -153,10 +177,10 @@ flowchart LR
     B --> C[CUDA/PyTorch tensor features]
     B --> D[RAPIDS cuGraph features]
     B --> E[PyTorch Geometric GNN baseline]
-    C --> F[Anomaly scoring]
+    C --> F[Model quality evaluation]
     D --> F
     E --> F
-    F --> G[Benchmark results]
+    F --> G[Accuracy and memory benchmark]
     G --> H[Docker and Kubernetes deployment reference]
 ```
 
@@ -170,6 +194,8 @@ cuda13-graph-ai-fraud-detection/
   Makefile
   LICENSE
   .gitignore
+  src/
+    metrics.py
   examples/
     gpu_smoke_test.py
     graph_feature_gpu.py
@@ -179,7 +205,7 @@ cuda13-graph-ai-fraud-detection/
     rapids_cugraph_elliptic.py
     pyg_gnn_elliptic_baseline.py
   benchmarks/
-    cpu_vs_gpu_benchmark.py
+    model_quality_memory_benchmark.py
     results.md
   docs/
     architecture.md
@@ -202,7 +228,7 @@ This repository uses synthetic and public fraud-style datasets to demonstrate GP
 - transaction anomaly scoring
 - mule-risk style network analytics
 - public fraud dataset experimentation
-- CPU vs GPU benchmarking
+- accuracy, F1, and memory-footprint benchmarking
 - RAPIDS/cuGraph graph features
 - GraphSAGE baseline modeling
 
@@ -210,16 +236,17 @@ The synthetic data does not contain real payment data. Public datasets should be
 
 ## Contribution roadmap
 
-- [ ] Add custom CUDA kernel example for edge aggregation
+- [ ] Add measured CUDA 13 GPU memory benchmark results
+- [ ] Add public-dataset accuracy and F1 benchmark results
+- [ ] Add compact GNN memory comparison
+- [ ] Add custom CUDA kernel example for memory-efficient edge aggregation
 - [ ] Add self-hosted GitHub Actions GPU runner guide
 - [ ] Add Kubernetes autoscaling pattern for GPU inference
 - [ ] Add model monitoring dashboard
-- [ ] Add benchmark results from public datasets
-- [ ] Add measured CUDA 13 GPU benchmark results
 
 ## Suggested GitHub topics
 
-`cuda`, `cuda-13`, `gpu-computing`, `graph-ai`, `fraud-detection`, `anomaly-detection`, `financial-crime`, `mlops`, `pytorch`, `docker`, `kubernetes`, `responsible-ai`, `rapids`, `cugraph`, `pytorch-geometric`
+`cuda`, `cuda-13`, `gpu-computing`, `graph-ai`, `fraud-detection`, `anomaly-detection`, `financial-crime`, `mlops`, `pytorch`, `docker`, `kubernetes`, `responsible-ai`, `rapids`, `cugraph`, `pytorch-geometric`, `model-compression`, `memory-efficient-ai`
 
 ## License
 
