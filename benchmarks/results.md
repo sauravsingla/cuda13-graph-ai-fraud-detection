@@ -1,160 +1,109 @@
 # Benchmark Results
 
-This file records benchmark output focused on CPU vs GPU model quality and memory footprint.
+This file contains only benchmark numbers that are known and reproducible from the committed code.
 
-## Benchmark philosophy
+No measured CPU, older CUDA GPU, or latest CUDA GPU accuracy/memory results are published here until the benchmark has been run in those environments on the same dataset.
 
-This repository does **not** use raw speed as the primary benchmark. The goal is to compare fraud models using production-relevant quality and efficiency metrics on CPU and GPU:
+## Benchmark scope
 
-- accuracy
-- precision
-- recall
-- F1 score
-- parameter count
-- model size in MB
-- CPU model memory footprint through model size
-- peak CUDA memory in MB when CUDA is available
+The benchmark compares the same fraud-detection models across three execution environments:
 
-## Static model footprint
+1. CPU baseline
+2. GPU with older CUDA environment
+3. GPU with latest CUDA 13.3 / 13.3 Update 1 aligned environment
 
-These values are derived directly from the model definitions and do not require the dataset to be downloaded.
+The benchmark focus is **model quality and memory footprint**, not raw runtime speed.
+
+## Static model footprint benchmark
+
+These values are derived directly from the model definitions in `benchmarks/model_quality_memory_benchmark.py` and do not require the dataset to be downloaded.
 
 | Model | Input features | Parameters | Model size MB | Relative size |
 |---|---:|---:|---:|---:|
 | Compact Logistic | 30 | 31 | 0.000118 | 1.00x |
 | Wider MLP | 30 | 12,289 | 0.046879 | 396.42x |
 
-Interpretation:
+## Static benchmark interpretation
 
-- The compact logistic model is about **396x smaller** than the wider MLP by parameter count and serialized parameter footprint.
-- Accuracy, precision, recall, and F1 require the public credit-card dataset and should be filled after a real local run.
-- Peak CUDA memory requires a CUDA GPU run and should not be fabricated.
+- The compact logistic model has **31 parameters**.
+- The wider MLP has **12,289 parameters**.
+- The wider MLP is about **396x larger** than the compact logistic model by parameter count and serialized parameter footprint.
+- These numbers are valid for CPU, older CUDA GPU, and latest CUDA GPU runs because the model architecture is unchanged across environments.
 
-## Public credit-card fraud CPU vs GPU benchmark
+## Metrics intentionally not filled here
 
-Run CPU and GPU when CUDA is available:
+The following metrics are intentionally not published in this file until the benchmark is run on the real dataset in the target environment:
 
-```bash
-python benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device both
-```
-
-Run CPU only:
-
-```bash
-python benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device cpu
-```
-
-Run CUDA GPU only:
-
-```bash
-python benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device cuda
-```
-
-Or:
-
-```bash
-make benchmark
-```
-
-Reporting template with known static values pre-filled:
-
-| Environment | Device | Rows | Fraud labels | Model | Accuracy | Precision | Recall | F1 | Parameters | Model size MB | Peak memory MB | Notes |
-|---|---|---:|---:|---|---:|---:|---:|---:|---:|---:|---:|---|
-| Local CUDA 13 machine | CPU | run-required | run-required | Compact Logistic | run-required | run-required | run-required | run-required | 31 | 0.000118 | 0.00 | CPU baseline |
-| Local CUDA 13 machine | CPU | run-required | run-required | Wider MLP | run-required | run-required | run-required | run-required | 12,289 | 0.046879 | 0.00 | CPU baseline |
-| Local CUDA 13 machine | CUDA GPU | run-required | run-required | Compact Logistic | run-required | run-required | run-required | run-required | 31 | 0.000118 | run-required | CUDA memory measured |
-| Local CUDA 13 machine | CUDA GPU | run-required | run-required | Wider MLP | run-required | run-required | run-required | run-required | 12,289 | 0.046879 | run-required | CUDA memory measured |
-
-## Compact model target
-
-A compact model is preferred when it preserves strong recall and F1 while reducing:
-
-- parameters
-- serialized model size
-- peak CUDA memory
-- deployment complexity
-
-Suggested acceptance criteria:
-
-| Metric | Target |
+| Metric | Why it is not pre-filled |
 |---|---|
-| Recall | Keep high for fraud detection use cases |
-| F1 | Improve or remain close to wider model |
-| Model size | Lower than wider model |
-| Peak CUDA memory | Lower than wider model on GPU |
-| Parameters | Lower than wider model |
+| Accuracy | Requires actual dataset run |
+| Precision | Requires actual dataset run |
+| Recall | Requires actual dataset run |
+| F1 | Requires actual dataset run |
+| Rows | Requires exact dataset file/version |
+| Fraud labels | Requires exact dataset file/version |
+| Peak CUDA memory MB | Requires real CUDA GPU execution |
 
-## Public credit-card single-model example
+## Required benchmark runs
 
-Run:
-
-```bash
-python examples/public_creditcard_fraud_gpu.py --csv data/creditcard.csv
-```
-
-Reporting template with known static values pre-filled:
-
-| Environment | Device | Rows | Fraud labels | Accuracy | Precision | Recall | F1 | Parameters | Model size MB | Peak CUDA memory MB | Notes |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
-| Local CUDA 13 machine | CUDA GPU or CPU | run-required | run-required | run-required | run-required | run-required | run-required | 31 | 0.000118 | run-required | Compact logistic model |
-
-## Elliptic graph loader example
-
-Run:
+Run CPU baseline:
 
 ```bash
-python examples/elliptic_graph_loader.py --data-dir data/elliptic_bitcoin_dataset
+python benchmarks/model_quality_memory_benchmark.py \
+  --csv data/creditcard.csv \
+  --device cpu \
+  --label cpu-baseline
 ```
 
-Suggested reporting format:
-
-| Environment | Device | Nodes | Edges | Label rows | Added graph features | Peak CUDA memory MB | Notes |
-|---|---|---:|---:|---:|---|---:|---|
-| Local CUDA 13 machine | CUDA GPU or CPU | run-required | run-required | run-required | in_degree, out_degree | run-required | Public Elliptic graph dataset |
-
-## RAPIDS cuGraph Elliptic example
-
-Run in a RAPIDS environment:
+Run older CUDA GPU benchmark:
 
 ```bash
-python examples/rapids_cugraph_elliptic.py --data-dir data/elliptic_bitcoin_dataset
+python benchmarks/model_quality_memory_benchmark.py \
+  --csv data/creditcard.csv \
+  --device cuda \
+  --label cuda-12-old
 ```
 
-Suggested reporting format:
-
-| Environment | GPU | Nodes | Edges | Graph features | Peak GPU memory MB | Notes |
-|---|---|---:|---:|---|---:|---|
-| Local RAPIDS CUDA environment | run-required | run-required | run-required | PageRank, in-degree, out-degree | run-required | Public Elliptic graph dataset |
-
-## PyTorch Geometric GNN baseline
-
-Run in a PyTorch Geometric environment:
+Run latest CUDA GPU benchmark:
 
 ```bash
-python examples/pyg_gnn_elliptic_baseline.py --data-dir data/elliptic_bitcoin_dataset
+python benchmarks/model_quality_memory_benchmark.py \
+  --csv data/creditcard.csv \
+  --device cuda \
+  --label cuda-13-latest
 ```
 
-Suggested reporting format:
+## Final result format after real runs
 
-| Environment | GPU | Nodes | Edges | Known labels | Model | Accuracy | Parameters | Model size MB | Peak CUDA memory MB | Notes |
-|---|---|---:|---:|---:|---|---:|---:|---:|---:|---|
-| Local CUDA 13 PyG environment | run-required | run-required | run-required | run-required | GraphSAGE | run-required | run-required | run-required | run-required | Public Elliptic graph dataset |
+After the benchmark is executed in the three target environments, paste the measured output below this section using this shape:
 
-## Hardware details to report
+| Label | Device | Model | Accuracy | Precision | Recall | F1 | Parameters | Model size MB | Peak memory MB |
+|---|---|---|---:|---:|---:|---:|---:|---:|---:|
+
+Do not add rows to this table until actual measured output is available.
+
+## Required reporting metadata
+
+Always report:
 
 ```text
+Dataset source/version:
+Rows:
+Fraud labels:
+Train/test split:
+Epochs:
+Learning rate:
+CPU model:
+RAM:
 GPU model:
 NVIDIA driver version:
 CUDA toolkit version:
+PyTorch version:
 PyTorch CUDA version:
-CPU model:
-RAM:
-OS:
-Dataset version/source:
-Epochs:
-Learning rate:
+Operating system:
+Docker image or VM image:
 ```
 
-## Interpretation
+## Honesty rule
 
-Add measured accuracy, precision, recall, F1, dataset row counts, and peak CUDA memory only after running on a real dataset and, when relevant, a real CUDA GPU machine. Static model footprint values are already pre-filled because they are derived from the model code. Accuracy should be similar across CPU and GPU for the same model and training settings, while memory reporting differs: CPU uses model-size and parameter footprint, and CUDA additionally reports peak GPU memory. Do not compare model accuracy or memory footprint without reporting dataset version, hardware, model configuration, and training settings.
+Static model footprint numbers can be published because they are derived directly from code. Accuracy, recall, F1, and CUDA memory numbers must not be published until they are produced by a real benchmark run on the stated dataset and hardware.
