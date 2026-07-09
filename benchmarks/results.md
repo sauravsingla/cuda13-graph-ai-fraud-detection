@@ -1,10 +1,10 @@
 # Benchmark Results
 
-This file records benchmark output focused on model quality and memory footprint.
+This file records benchmark output focused on CPU vs GPU model quality and memory footprint.
 
 ## Benchmark philosophy
 
-This repository does **not** use raw speed as the primary benchmark. The goal is to compare fraud models using production-relevant quality and efficiency metrics:
+This repository does **not** use raw speed as the primary benchmark. The goal is to compare fraud models using production-relevant quality and efficiency metrics on CPU and GPU:
 
 - accuracy
 - precision
@@ -12,14 +12,27 @@ This repository does **not** use raw speed as the primary benchmark. The goal is
 - F1 score
 - parameter count
 - model size in MB
+- CPU model memory footprint through model size
 - peak CUDA memory in MB when CUDA is available
 
-## Public credit-card fraud model-quality benchmark
+## Public credit-card fraud CPU vs GPU benchmark
 
-Run:
+Run CPU and GPU when CUDA is available:
 
 ```bash
-python benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv
+python benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device both
+```
+
+Run CPU only:
+
+```bash
+python benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device cpu
+```
+
+Run CUDA GPU only:
+
+```bash
+python benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device cuda
 ```
 
 Or:
@@ -30,10 +43,12 @@ make benchmark
 
 Suggested reporting format:
 
-| Environment | Device | Rows | Fraud labels | Model | Accuracy | Precision | Recall | F1 | Parameters | Model size MB | Peak CUDA memory MB | Notes |
+| Environment | Device | Rows | Fraud labels | Model | Accuracy | Precision | Recall | F1 | Parameters | Model size MB | Peak memory MB | Notes |
 |---|---|---:|---:|---|---:|---:|---:|---:|---:|---:|---:|---|
-| Local CUDA 13 GPU | TBD | TBD | TBD | Compact Logistic | TBD | TBD | TBD | TBD | TBD | TBD | TBD | Public credit-card dataset |
-| Local CUDA 13 GPU | TBD | TBD | TBD | Wider MLP | TBD | TBD | TBD | TBD | TBD | TBD | TBD | Public credit-card dataset |
+| Local CUDA 13 machine | CPU | TBD | TBD | Compact Logistic | TBD | TBD | TBD | TBD | TBD | TBD | 0.00 | CPU baseline |
+| Local CUDA 13 machine | CPU | TBD | TBD | Wider MLP | TBD | TBD | TBD | TBD | TBD | TBD | 0.00 | CPU baseline |
+| Local CUDA 13 machine | CUDA GPU | TBD | TBD | Compact Logistic | TBD | TBD | TBD | TBD | TBD | TBD | TBD | CUDA memory measured |
+| Local CUDA 13 machine | CUDA GPU | TBD | TBD | Wider MLP | TBD | TBD | TBD | TBD | TBD | TBD | TBD | CUDA memory measured |
 
 ## Compact model target
 
@@ -41,7 +56,7 @@ A compact model is preferred when it preserves strong recall and F1 while reduci
 
 - parameters
 - serialized model size
-- peak GPU memory
+- peak CUDA memory
 - deployment complexity
 
 Suggested acceptance criteria:
@@ -51,7 +66,7 @@ Suggested acceptance criteria:
 | Recall | Keep high for fraud detection use cases |
 | F1 | Improve or remain close to wider model |
 | Model size | Lower than wider model |
-| Peak CUDA memory | Lower than wider model |
+| Peak CUDA memory | Lower than wider model on GPU |
 | Parameters | Lower than wider model |
 
 ## Public credit-card single-model example
@@ -66,7 +81,7 @@ Suggested reporting format:
 
 | Environment | Device | Rows | Fraud labels | Accuracy | Precision | Recall | F1 | Parameters | Model size MB | Peak CUDA memory MB | Notes |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
-| Local CUDA 13 GPU | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | Compact logistic model |
+| Local CUDA 13 machine | CUDA GPU or CPU | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | Compact logistic model |
 
 ## Elliptic graph loader example
 
@@ -80,7 +95,7 @@ Suggested reporting format:
 
 | Environment | Device | Nodes | Edges | Label rows | Added graph features | Peak CUDA memory MB | Notes |
 |---|---|---:|---:|---:|---|---:|---|
-| Local CUDA 13 GPU | TBD | TBD | TBD | TBD | in_degree, out_degree | TBD | Public Elliptic graph dataset |
+| Local CUDA 13 machine | CUDA GPU or CPU | TBD | TBD | TBD | in_degree, out_degree | TBD | Public Elliptic graph dataset |
 
 ## RAPIDS cuGraph Elliptic example
 
@@ -120,8 +135,11 @@ PyTorch CUDA version:
 CPU model:
 RAM:
 OS:
+Dataset version/source:
+Epochs:
+Learning rate:
 ```
 
 ## Interpretation
 
-Add measured results only after running on a real dataset and, when relevant, a real CUDA GPU machine. Do not compare model accuracy or memory footprint without reporting dataset version, hardware, model configuration, and training settings.
+Add measured results only after running on a real dataset and, when relevant, a real CUDA GPU machine. Accuracy should be similar across CPU and GPU for the same model and training settings, while memory reporting differs: CPU uses model-size and parameter footprint, and CUDA additionally reports peak GPU memory. Do not compare model accuracy or memory footprint without reporting dataset version, hardware, model configuration, and training settings.
