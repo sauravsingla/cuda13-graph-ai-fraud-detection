@@ -6,17 +6,17 @@
 ![CI](https://img.shields.io/badge/CI-GitHub%20Actions-black)
 ![License](https://img.shields.io/badge/License-Apache--2.0-lightgrey)
 
-CUDA 13 compatible GPU examples for graph-based fraud detection, anomaly scoring, public fraud datasets, model accuracy benchmarking, and memory-efficient financial risk analytics.
+CUDA 13 compatible GPU examples for graph-based fraud detection, anomaly scoring, public fraud datasets, model quality benchmarking, and model-footprint comparison.
 
 ## Why this project matters
 
-Fraud and mule-risk detection systems need models that are accurate, explainable, and memory-efficient enough for production deployment. This project demonstrates how CUDA 13.x, PyTorch, RAPIDS cuGraph, and PyTorch Geometric can support graph feature extraction, anomaly scoring, CPU-vs-GPU model-quality evaluation, memory-footprint analysis, and production-oriented AI workflows.
+Fraud and mule-risk detection systems need models that are accurate, explainable, and efficient enough for production deployment. This project demonstrates how CUDA 13.x, PyTorch, RAPIDS cuGraph, and PyTorch Geometric can support graph feature extraction, anomaly scoring, CPU-vs-GPU model-quality evaluation, model-footprint analysis, and production-oriented AI workflows.
 
 ## Features
 
 - CUDA 13 Docker environment
 - GPU smoke test
-- CPU vs GPU model accuracy and memory-footprint benchmark
+- CPU vs GPU model-quality and model-footprint benchmark
 - Benchmark matrix for CPU, older CUDA GPU, and latest CUDA GPU environments
 - Synthetic transaction graph generator
 - Public credit-card fraud dataset example
@@ -100,9 +100,9 @@ make pyg-elliptic
 
 ## Benchmark focus
 
-This repository benchmarks **model quality and memory footprint on CPU vs GPU**, not raw execution speed.
+This repository benchmarks only metrics that can be produced consistently across all three benchmark environments: CPU, older CUDA GPU, and latest CUDA GPU.
 
-Primary benchmark metrics:
+Included metrics:
 
 - accuracy
 - precision
@@ -110,8 +110,14 @@ Primary benchmark metrics:
 - F1 score
 - parameter count
 - model size in MB
-- CPU memory footprint through model size
-- peak CUDA memory in MB when CUDA is available
+
+Excluded metrics:
+
+- runtime speed
+- peak CUDA memory
+- GPU utilization
+- CUDA kernel timing
+- throughput
 
 Benchmark matrix:
 
@@ -139,7 +145,7 @@ Run latest CUDA GPU environment:
 python benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device cuda --label cuda-13-latest
 ```
 
-This compares a compact logistic fraud model against a wider MLP and reports the trade-off between model quality and memory footprint on CPU, older CUDA GPU, and latest CUDA GPU environments.
+This compares a compact logistic fraud model against a wider MLP and reports only the common benchmark metrics across CPU, older CUDA GPU, and latest CUDA GPU environments.
 
 Full execution guide: [`docs/benchmark-execution-matrix.md`](docs/benchmark-execution-matrix.md)
 
@@ -161,7 +167,7 @@ Run:
 python examples/public_creditcard_fraud_gpu.py --csv data/creditcard.csv
 ```
 
-This trains a compact GPU-friendly PyTorch classifier and reports accuracy, precision, recall, F1, parameter count, model size, and peak CUDA memory.
+This trains a compact GPU-friendly PyTorch classifier and reports accuracy, precision, recall, F1, parameter count, and model size.
 
 ### Elliptic Bitcoin graph dataset
 
@@ -209,7 +215,7 @@ flowchart LR
     B --> E[Latest CUDA GPU model evaluation]
     B --> F[RAPIDS cuGraph features]
     B --> G[PyTorch Geometric GNN baseline]
-    C --> H[Accuracy and memory metrics]
+    C --> H[Common quality and footprint metrics]
     D --> H
     E --> H
     F --> H
@@ -263,7 +269,7 @@ This repository uses synthetic and public fraud-style datasets to demonstrate GP
 - transaction anomaly scoring
 - mule-risk style network analytics
 - public fraud dataset experimentation
-- CPU vs GPU accuracy, F1, and memory-footprint benchmarking
+- CPU vs GPU accuracy, precision, recall, F1, parameter count, and model-size benchmarking
 - older CUDA vs latest CUDA GPU benchmark comparison
 - RAPIDS/cuGraph graph features
 - GraphSAGE baseline modeling
@@ -274,8 +280,8 @@ The synthetic data does not contain real payment data. Public datasets should be
 
 - [ ] Add measured CPU baseline, old CUDA GPU, and latest CUDA GPU benchmark results
 - [ ] Add public-dataset CPU vs GPU accuracy and F1 benchmark results
-- [ ] Add compact GNN memory comparison
-- [ ] Add custom CUDA kernel example for memory-efficient edge aggregation
+- [ ] Add compact GNN model-footprint comparison
+- [ ] Add custom CUDA kernel example for graph feature extraction
 - [ ] Add self-hosted GitHub Actions GPU runner guide
 - [ ] Add Kubernetes autoscaling pattern for GPU inference
 - [ ] Add model monitoring dashboard
