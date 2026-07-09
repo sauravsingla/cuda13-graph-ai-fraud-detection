@@ -57,13 +57,22 @@ This gives the reference model quality and static model footprint on CPU.
 
 ## Environment B: GPU with older CUDA
 
-Recommended old-CUDA comparison target:
+Older CUDA comparison target:
 
 ```text
-CUDA 12.6.x GPU environment
+CUDA 12.6.3 GPU environment
+Docker image: nvidia/cuda:12.6.3-devel-ubuntu24.04
+Repository Dockerfile: Dockerfile.cuda12
 ```
 
-Run in an older CUDA container or VM:
+Build and run the older CUDA image:
+
+```bash
+make docker-build-cuda12
+make docker-benchmark-cuda12
+```
+
+Equivalent direct run inside an older CUDA container or VM:
 
 ```bash
 python benchmarks/model_quality_memory_benchmark.py \
@@ -82,19 +91,22 @@ python -c "import torch; print(torch.__version__); print(torch.version.cuda); pr
 
 ## Environment C: GPU with latest CUDA 13.3 alignment
 
-Current latest CUDA documentation reference:
+Latest CUDA comparison target:
 
 ```text
-CUDA Toolkit 13.3 Update 1
+CUDA Toolkit 13.3 / 13.3 Update 1 alignment
+Docker image: nvidia/cuda:13.3.0-devel-ubuntu24.04
+Repository Dockerfile: Dockerfile.cuda13
 ```
 
-Repository Docker target:
+Build and run the latest CUDA image:
 
-```text
-nvidia/cuda:13.3.0-devel-ubuntu24.04
+```bash
+make docker-build-cuda13
+make docker-benchmark-cuda13
 ```
 
-Run:
+Equivalent direct run:
 
 ```bash
 python benchmarks/model_quality_memory_benchmark.py \
