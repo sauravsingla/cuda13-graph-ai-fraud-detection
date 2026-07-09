@@ -15,6 +15,7 @@ Fraud and mule-risk detection systems need models that are accurate, explainable
 ## Features
 
 - CUDA 13 Docker environment
+- CUDA 12 older-version Docker environment for comparison
 - GPU smoke test
 - CPU vs GPU model-quality and model-footprint benchmark
 - Benchmark matrix for CPU, older CUDA GPU, and latest CUDA GPU environments
@@ -33,8 +34,9 @@ Fraud and mule-risk detection systems need models that are accurate, explainable
 | Component | Version |
 |---|---|
 | CUDA target | 13.x |
-| Current CUDA alignment | CUDA Toolkit 13.3 / 13.3 Update 1 notes |
-| NVIDIA CUDA Docker image | `nvidia/cuda:13.3.0-devel-ubuntu24.04` |
+| Latest CUDA alignment | CUDA Toolkit 13.3 / 13.3 Update 1 notes |
+| Latest CUDA Docker image | `nvidia/cuda:13.3.0-devel-ubuntu24.04` |
+| Older CUDA comparison image | `nvidia/cuda:12.6.3-devel-ubuntu24.04` |
 | NVIDIA Driver | `>=580` for CUDA 13.x compatibility; `>=610.43.02` preferred for CUDA 13.3 / 13.3 Update 1 alignment |
 | Python | 3.10+ |
 | OS | Ubuntu 24.04 recommended |
@@ -51,16 +53,25 @@ nvidia-smi
 nvcc --version
 ```
 
-### 2. Build Docker image
+### 2. Build Docker images
+
+Latest CUDA 13 image:
 
 ```bash
-docker build -f Dockerfile.cuda13 -t cuda13-graph-ai-fraud-detection:latest .
+docker build -f Dockerfile.cuda13 -t cuda13-graph-ai-fraud-detection:cuda13 .
 ```
 
-### 3. Run GPU smoke test
+Older CUDA 12 comparison image:
 
 ```bash
-docker run --rm --gpus all cuda13-graph-ai-fraud-detection:latest
+docker build -f Dockerfile.cuda12 -t cuda13-graph-ai-fraud-detection:cuda12 .
+```
+
+### 3. Run GPU smoke tests
+
+```bash
+docker run --rm --gpus all cuda13-graph-ai-fraud-detection:cuda13
+docker run --rm --gpus all cuda13-graph-ai-fraud-detection:cuda12
 ```
 
 Expected output:
@@ -92,6 +103,10 @@ make benchmark
 make benchmark-cpu
 make benchmark-cuda-old
 make benchmark-cuda-latest
+make docker-build-cuda12
+make docker-build-cuda13
+make docker-benchmark-cuda12
+make docker-benchmark-cuda13
 make creditcard
 make elliptic
 make rapids-elliptic
@@ -143,6 +158,15 @@ Run latest CUDA GPU environment:
 
 ```bash
 python benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device cuda --label cuda-13-latest
+```
+
+Run Docker-based CUDA comparison:
+
+```bash
+make docker-build-cuda12
+make docker-build-cuda13
+make docker-benchmark-cuda12
+make docker-benchmark-cuda13
 ```
 
 This compares a compact logistic fraud model against a wider MLP and reports only the common benchmark metrics across CPU, older CUDA GPU, and latest CUDA GPU environments.
@@ -228,6 +252,7 @@ flowchart LR
 ```text
 cuda13-graph-ai-fraud-detection/
   README.md
+  Dockerfile.cuda12
   Dockerfile.cuda13
   requirements.txt
   Makefile
