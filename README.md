@@ -20,6 +20,8 @@ Fraud and mule-risk detection systems often need to process large transaction gr
 - Synthetic transaction graph generator
 - Public credit-card fraud dataset example
 - Public Elliptic Bitcoin transaction graph loader
+- RAPIDS cuGraph example for GPU graph analytics
+- PyTorch Geometric GraphSAGE baseline
 - GPU-accelerated anomaly scoring example
 - CI workflow for CPU validation
 - Kubernetes GPU deployment reference
@@ -76,6 +78,17 @@ python examples/graph_feature_gpu.py
 python benchmarks/cpu_vs_gpu_benchmark.py
 ```
 
+Common commands are also available through `make`:
+
+```bash
+make install
+make test
+make smoke
+make benchmark
+make creditcard
+make elliptic
+```
+
 ## Public dataset examples
 
 This repository does not commit datasets directly. Download each dataset from its official public source and place it under `data/`.
@@ -112,15 +125,40 @@ elliptic_txs_classes.csv
 elliptic_txs_edgelist.csv
 ```
 
-Run:
+Run the basic loader:
 
 ```bash
 python examples/elliptic_graph_loader.py --data-dir data/elliptic_bitcoin_dataset
 ```
 
-This loads node features, labels, and directed transaction edges, then computes GPU-friendly in-degree and out-degree features.
+Run the RAPIDS cuGraph example in a RAPIDS environment:
+
+```bash
+python examples/rapids_cugraph_elliptic.py --data-dir data/elliptic_bitcoin_dataset
+```
+
+Run the PyTorch Geometric GraphSAGE baseline in a PyG environment:
+
+```bash
+python examples/pyg_gnn_elliptic_baseline.py --data-dir data/elliptic_bitcoin_dataset
+```
 
 More details: [`docs/public-datasets.md`](docs/public-datasets.md)
+
+## Architecture
+
+```mermaid
+flowchart LR
+    A[Public or synthetic dataset] --> B[Graph loader]
+    B --> C[CUDA/PyTorch tensor features]
+    B --> D[RAPIDS cuGraph features]
+    B --> E[PyTorch Geometric GNN baseline]
+    C --> F[Anomaly scoring]
+    D --> F
+    E --> F
+    F --> G[Benchmark results]
+    G --> H[Docker and Kubernetes deployment reference]
+```
 
 ## Project structure
 
@@ -129,13 +167,17 @@ cuda13-graph-ai-fraud-detection/
   README.md
   Dockerfile.cuda13
   requirements.txt
+  Makefile
   LICENSE
+  .gitignore
   examples/
     gpu_smoke_test.py
     graph_feature_gpu.py
     anomaly_score_gpu.py
     public_creditcard_fraud_gpu.py
     elliptic_graph_loader.py
+    rapids_cugraph_elliptic.py
+    pyg_gnn_elliptic_baseline.py
   benchmarks/
     cpu_vs_gpu_benchmark.py
     results.md
@@ -161,22 +203,23 @@ This repository uses synthetic and public fraud-style datasets to demonstrate GP
 - mule-risk style network analytics
 - public fraud dataset experimentation
 - CPU vs GPU benchmarking
+- RAPIDS/cuGraph graph features
+- GraphSAGE baseline modeling
 
 The synthetic data does not contain real payment data. Public datasets should be downloaded separately according to their own terms of use.
 
 ## Contribution roadmap
 
-- [ ] Add RAPIDS cuGraph implementation
-- [ ] Add PyTorch Geometric GNN baseline
-- [ ] Add CUDA kernel example for edge aggregation
+- [ ] Add custom CUDA kernel example for edge aggregation
 - [ ] Add self-hosted GitHub Actions GPU runner guide
 - [ ] Add Kubernetes autoscaling pattern for GPU inference
 - [ ] Add model monitoring dashboard
 - [ ] Add benchmark results from public datasets
+- [ ] Add measured CUDA 13 GPU benchmark results
 
 ## Suggested GitHub topics
 
-`cuda`, `cuda-13`, `gpu-computing`, `graph-ai`, `fraud-detection`, `anomaly-detection`, `financial-crime`, `mlops`, `pytorch`, `docker`, `kubernetes`, `responsible-ai`
+`cuda`, `cuda-13`, `gpu-computing`, `graph-ai`, `fraud-detection`, `anomaly-detection`, `financial-crime`, `mlops`, `pytorch`, `docker`, `kubernetes`, `responsible-ai`, `rapids`, `cugraph`, `pytorch-geometric`
 
 ## License
 
