@@ -1,56 +1,60 @@
 # Benchmark Results
 
-This file records benchmark output from synthetic and public dataset experiments.
+This file records benchmark output focused on model quality and memory footprint.
 
-## Synthetic graph benchmark
+## Benchmark philosophy
+
+This repository does **not** use raw speed as the primary benchmark. The goal is to compare fraud models using production-relevant quality and efficiency metrics:
+
+- accuracy
+- precision
+- recall
+- F1 score
+- parameter count
+- model size in MB
+- peak CUDA memory in MB when CUDA is available
+
+## Public credit-card fraud model-quality benchmark
 
 Run:
 
 ```bash
-python benchmarks/cpu_vs_gpu_benchmark.py
+python benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv
 ```
 
-### Current CPU baseline result
-
-| Environment | Runtime | Torch build | CUDA available | Nodes | Edges | Mean time | Runs | Notes |
-|---|---|---|---:|---:|---:|---:|---:|---|
-| ChatGPT sandbox CPU baseline | CPU only | PyTorch 2.10.0+cpu | No | 100,000 | 1,000,000 | 0.3642s | 3 | CPU validation only; not a CUDA GPU benchmark |
-
-Per-run timings:
-
-| Run | Time |
-|---:|---:|
-| 1 | 0.3950s |
-| 2 | 0.3953s |
-| 3 | 0.3022s |
-
-### Pending measured CUDA GPU result
-
-| Environment | GPU | CUDA | CPU time | GPU time | Speedup | Notes |
-|---|---|---|---:|---:|---:|---|
-| Local CUDA 13 GPU | TBD | 13.x | TBD | TBD | TBD | Replace with measured result from a real NVIDIA GPU machine |
-
-Run on a real CUDA-enabled machine:
+Or:
 
 ```bash
-nvidia-smi
-nvcc --version
-python benchmarks/cpu_vs_gpu_benchmark.py
+make benchmark
 ```
 
-Report these details with the measured result:
+Suggested reporting format:
 
-```text
-GPU model:
-NVIDIA driver version:
-CUDA toolkit version:
-PyTorch CUDA version:
-CPU model:
-RAM:
-OS:
-```
+| Environment | Device | Rows | Fraud labels | Model | Accuracy | Precision | Recall | F1 | Parameters | Model size MB | Peak CUDA memory MB | Notes |
+|---|---|---:|---:|---|---:|---:|---:|---:|---:|---:|---:|---|
+| Local CUDA 13 GPU | TBD | TBD | TBD | Compact Logistic | TBD | TBD | TBD | TBD | TBD | TBD | TBD | Public credit-card dataset |
+| Local CUDA 13 GPU | TBD | TBD | TBD | Wider MLP | TBD | TBD | TBD | TBD | TBD | TBD | TBD | Public credit-card dataset |
 
-## Public credit-card fraud example
+## Compact model target
+
+A compact model is preferred when it preserves strong recall and F1 while reducing:
+
+- parameters
+- serialized model size
+- peak GPU memory
+- deployment complexity
+
+Suggested acceptance criteria:
+
+| Metric | Target |
+|---|---|
+| Recall | Keep high for fraud detection use cases |
+| F1 | Improve or remain close to wider model |
+| Model size | Lower than wider model |
+| Peak CUDA memory | Lower than wider model |
+| Parameters | Lower than wider model |
+
+## Public credit-card single-model example
 
 Run:
 
@@ -60,9 +64,9 @@ python examples/public_creditcard_fraud_gpu.py --csv data/creditcard.csv
 
 Suggested reporting format:
 
-| Environment | Rows | Fraud labels | Accuracy | Precision | Recall | Notes |
-|---|---:|---:|---:|---:|---:|---|
-| Local CUDA 13 GPU | TBD | TBD | TBD | TBD | TBD | Public credit-card dataset |
+| Environment | Device | Rows | Fraud labels | Accuracy | Precision | Recall | F1 | Parameters | Model size MB | Peak CUDA memory MB | Notes |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| Local CUDA 13 GPU | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | Compact logistic model |
 
 ## Elliptic graph loader example
 
@@ -74,9 +78,9 @@ python examples/elliptic_graph_loader.py --data-dir data/elliptic_bitcoin_datase
 
 Suggested reporting format:
 
-| Environment | Nodes | Edges | Label rows | GPU degree aggregation | Notes |
-|---|---:|---:|---:|---:|---|
-| Local CUDA 13 GPU | TBD | TBD | TBD | TBD | Public Elliptic graph dataset |
+| Environment | Device | Nodes | Edges | Label rows | Added graph features | Peak CUDA memory MB | Notes |
+|---|---|---:|---:|---:|---|---:|---|
+| Local CUDA 13 GPU | TBD | TBD | TBD | TBD | in_degree, out_degree | TBD | Public Elliptic graph dataset |
 
 ## RAPIDS cuGraph Elliptic example
 
@@ -88,9 +92,9 @@ python examples/rapids_cugraph_elliptic.py --data-dir data/elliptic_bitcoin_data
 
 Suggested reporting format:
 
-| Environment | GPU | Nodes | Edges | PageRank time | Degree time | Notes |
-|---|---|---:|---:|---:|---:|---|
-| Local RAPIDS CUDA environment | TBD | TBD | TBD | TBD | TBD | Public Elliptic graph dataset |
+| Environment | GPU | Nodes | Edges | Graph features | Peak GPU memory MB | Notes |
+|---|---|---:|---:|---|---:|---|
+| Local RAPIDS CUDA environment | TBD | TBD | TBD | PageRank, in-degree, out-degree | TBD | Public Elliptic graph dataset |
 
 ## PyTorch Geometric GNN baseline
 
@@ -102,12 +106,22 @@ python examples/pyg_gnn_elliptic_baseline.py --data-dir data/elliptic_bitcoin_da
 
 Suggested reporting format:
 
-| Environment | GPU | Nodes | Edges | Known labels | Accuracy | Notes |
-|---|---|---:|---:|---:|---:|---|
-| Local CUDA 13 PyG environment | TBD | TBD | TBD | TBD | TBD | GraphSAGE baseline |
+| Environment | GPU | Nodes | Edges | Known labels | Model | Accuracy | Parameters | Model size MB | Peak CUDA memory MB | Notes |
+|---|---|---:|---:|---:|---|---:|---:|---:|---:|---|
+| Local CUDA 13 PyG environment | TBD | TBD | TBD | TBD | GraphSAGE | TBD | TBD | TBD | TBD | Public Elliptic graph dataset |
+
+## Hardware details to report
+
+```text
+GPU model:
+NVIDIA driver version:
+CUDA toolkit version:
+PyTorch CUDA version:
+CPU model:
+RAM:
+OS:
+```
 
 ## Interpretation
 
-The CPU numeric result is measured in a CPU-only environment. CUDA GPU, RAPIDS cuGraph, and PyTorch Geometric GNN results should be added only after running on a real GPU machine. Report GPU model, driver version, CUDA version, PyTorch CUDA version, and hardware details.
-
-Do not compare numbers across different GPUs or CPUs without reporting hardware details.
+Add measured results only after running on a real dataset and, when relevant, a real CUDA GPU machine. Do not compare model accuracy or memory footprint without reporting dataset version, hardware, model configuration, and training settings.
