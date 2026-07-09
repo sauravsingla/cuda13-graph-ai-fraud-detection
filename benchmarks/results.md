@@ -2,7 +2,7 @@
 
 This file contains only benchmark numbers that are known and reproducible from the committed code.
 
-No measured CPU, older CUDA GPU, or latest CUDA GPU accuracy/memory results are published here until the benchmark has been run in those environments on the same dataset.
+No measured CPU, older CUDA GPU, or latest CUDA GPU quality results are published here until the benchmark has been run in those environments on the same dataset.
 
 ## Benchmark scope
 
@@ -12,7 +12,28 @@ The benchmark compares the same fraud-detection models across three execution en
 2. GPU with older CUDA environment
 3. GPU with latest CUDA 13.3 / 13.3 Update 1 aligned environment
 
-The benchmark focus is **model quality and memory footprint**, not raw runtime speed.
+The benchmark includes only metrics that can be produced consistently across all three environments.
+
+## Included benchmark metrics
+
+| Metric | Included | Reason |
+|---|---|---|
+| Accuracy | Yes | Available on CPU, older CUDA GPU, and latest CUDA GPU |
+| Precision | Yes | Available on CPU, older CUDA GPU, and latest CUDA GPU |
+| Recall | Yes | Available on CPU, older CUDA GPU, and latest CUDA GPU |
+| F1 | Yes | Available on CPU, older CUDA GPU, and latest CUDA GPU |
+| Parameters | Yes | Static model footprint, same across all environments |
+| Model size MB | Yes | Static model footprint, same across all environments |
+
+## Excluded benchmark metrics
+
+| Metric | Excluded | Reason |
+|---|---|---|
+| Runtime speed | Yes | Not the benchmark objective |
+| Peak CUDA memory MB | Yes | CUDA-only metric; not available on CPU in the same form |
+| GPU utilization | Yes | CUDA-only metric |
+| CUDA kernel timing | Yes | CUDA-only metric |
+| Throughput | Yes | Speed-oriented metric |
 
 ## Static model footprint benchmark
 
@@ -42,7 +63,6 @@ The following metrics are intentionally not published in this file until the ben
 | F1 | Requires actual dataset run |
 | Rows | Requires exact dataset file/version |
 | Fraud labels | Requires exact dataset file/version |
-| Peak CUDA memory MB | Requires real CUDA GPU execution |
 
 ## Required benchmark runs
 
@@ -77,8 +97,8 @@ python benchmarks/model_quality_memory_benchmark.py \
 
 After the benchmark is executed in the three target environments, paste the measured output below this section using this shape:
 
-| Label | Device | Model | Accuracy | Precision | Recall | F1 | Parameters | Model size MB | Peak memory MB |
-|---|---|---|---:|---:|---:|---:|---:|---:|---:|
+| Label | Device | Model | Accuracy | Precision | Recall | F1 | Parameters | Model size MB |
+|---|---|---|---:|---:|---:|---:|---:|---:|
 
 Do not add rows to this table until actual measured output is available.
 
@@ -106,4 +126,4 @@ Docker image or VM image:
 
 ## Honesty rule
 
-Static model footprint numbers can be published because they are derived directly from code. Accuracy, recall, F1, and CUDA memory numbers must not be published until they are produced by a real benchmark run on the stated dataset and hardware.
+Static model footprint numbers can be published because they are derived directly from code. Accuracy, precision, recall, and F1 must not be published until they are produced by a real benchmark run on the stated dataset and hardware.
