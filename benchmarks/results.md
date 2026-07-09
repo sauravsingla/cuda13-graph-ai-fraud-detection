@@ -10,7 +10,7 @@ Run:
 python benchmarks/cpu_vs_gpu_benchmark.py
 ```
 
-### Current baseline result
+### Current CPU baseline result
 
 | Environment | Runtime | Torch build | CUDA available | Nodes | Edges | Mean time | Runs | Notes |
 |---|---|---|---:|---:|---:|---:|---:|---|
@@ -24,18 +24,32 @@ Per-run timings:
 | 2 | 0.3953s |
 | 3 | 0.3022s |
 
-### CUDA GPU result
+### Sample CUDA GPU result
+
+Important: the GPU row below is a clearly marked sample result format for documentation and should be replaced with a measured result from your own CUDA 13 machine.
 
 | Environment | GPU | CUDA | CPU time | GPU time | Speedup | Notes |
 |---|---|---|---:|---:|---:|---|
-| Local CUDA 13 GPU | TBD | 13.x | TBD | TBD | TBD | Run on a CUDA 13 machine with NVIDIA GPU |
+| Sample CUDA 13 GPU benchmark | NVIDIA GPU, replace with exact model | 13.x | 0.3642s | 0.0450s | 8.09x | Illustrative sample only; not measured in this environment |
 
-GPU numbers should be added only after running on a real CUDA-enabled machine:
+Replace the sample row after running on a real CUDA-enabled machine:
 
 ```bash
 nvidia-smi
 nvcc --version
 python benchmarks/cpu_vs_gpu_benchmark.py
+```
+
+Report these details with the measured result:
+
+```text
+GPU model:
+NVIDIA driver version:
+CUDA toolkit version:
+PyTorch CUDA version:
+CPU model:
+RAM:
+OS:
 ```
 
 ## Public credit-card fraud example
@@ -68,6 +82,6 @@ Suggested reporting format:
 
 ## Interpretation
 
-The current numeric result is a CPU-only baseline from a non-GPU environment. It is useful for validating that the synthetic benchmark runs correctly, but it should not be presented as CUDA acceleration evidence. For CUDA visibility, add GPU numbers from a real NVIDIA GPU machine and report GPU model, driver version, CUDA version, and PyTorch CUDA version.
+The CPU numeric result is measured in a CPU-only environment. The sample GPU row is not measured here and should be replaced with a real CUDA 13 GPU run before using it as performance evidence. For CUDA visibility, report GPU model, driver version, CUDA version, PyTorch CUDA version, and hardware details.
 
 Do not compare numbers across different GPUs or CPUs without reporting hardware details.
