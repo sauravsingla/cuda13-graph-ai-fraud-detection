@@ -1,6 +1,6 @@
 # Benchmark Execution Matrix
 
-This project reports benchmarks only after running the same dataset and model settings across three environments:
+This project reports measured benchmarks only after running the same dataset and model settings across three environments:
 
 1. CPU baseline
 2. GPU with an older CUDA environment
@@ -21,6 +21,17 @@ Expected columns:
 ```text
 Time, V1, V2, ..., V28, Amount, Class
 ```
+
+## Static model footprint values
+
+These values are already known because they come directly from the model definitions:
+
+| Model | Input features | Parameters | Model size MB | Relative size |
+|---|---:|---:|---:|---:|
+| Compact Logistic | 30 | 31 | 0.000118 | 1.00x |
+| Wider MLP | 30 | 12,289 | 0.046879 | 396.42x |
+
+These values apply to CPU, older CUDA GPU, and latest CUDA GPU runs because the model architecture is unchanged.
 
 ## Environment A: CPU baseline
 
@@ -91,20 +102,14 @@ nvcc --version
 python -c "import torch; print(torch.__version__); print(torch.version.cuda); print(torch.cuda.get_device_name(0))"
 ```
 
-## Result table
+## Measured result table shape
 
-Paste the output from the benchmark script into `benchmarks/results.md`.
-
-Expected final comparison shape:
+After actual runs, paste the measured output from the benchmark script into `benchmarks/results.md` using this shape:
 
 | Label | Device | Model | Accuracy | Precision | Recall | F1 | Parameters | Model size MB | Peak memory MB |
 |---|---|---|---:|---:|---:|---:|---:|---:|---:|
-| cpu-baseline | cpu | Compact Logistic | run-required | run-required | run-required | run-required | 31 | 0.000118 | 0.00 |
-| cpu-baseline | cpu | Wider MLP | run-required | run-required | run-required | run-required | 12,289 | 0.046879 | 0.00 |
-| cuda-12-old | cuda | Compact Logistic | run-required | run-required | run-required | run-required | 31 | 0.000118 | run-required |
-| cuda-12-old | cuda | Wider MLP | run-required | run-required | run-required | run-required | 12,289 | 0.046879 | run-required |
-| cuda-13-latest | cuda | Compact Logistic | run-required | run-required | run-required | run-required | 31 | 0.000118 | run-required |
-| cuda-13-latest | cuda | Wider MLP | run-required | run-required | run-required | run-required | 12,289 | 0.046879 | run-required |
+
+Do not add rows until actual measured output is available.
 
 ## Interpretation guidance
 
@@ -138,4 +143,4 @@ Docker image or VM image:
 
 ## Important honesty rule
 
-Do not publish benchmark numbers until the benchmark has been run in the stated environment. Static model footprint numbers can be pre-filled because they are derived directly from the model definitions.
+Do not publish accuracy, recall, F1, or CUDA memory numbers until the benchmark has been run in the stated environment. Static model footprint numbers can be published because they are derived directly from the model definitions.
