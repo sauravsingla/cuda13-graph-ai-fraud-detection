@@ -13,11 +13,14 @@ This benchmark compares a compact logistic model against a wider MLP on:
   - peak CUDA memory in MB when CUDA is available
 
 The benchmark can run on CPU, GPU, or both. It does not report runtime speed.
+It also prints environment metadata so results can be compared across CPU,
+older CUDA GPU environments, and latest CUDA GPU environments.
 """
 
 from __future__ import annotations
 
 import argparse
+import platform
 from pathlib import Path
 
 import pandas as pd
@@ -110,7 +113,27 @@ def train_model(model: nn.Module, x_train: torch.Tensor, y_train: torch.Tensor, 
     return model
 
 
+def environment_summary(label: str) -> dict[str, str]:
+    gpu_name = "not-available"
+    cuda_device_count = "0"
+    if torch.cuda.is_available():
+        gpu_name = torch.cuda.get_device_name(0)
+        cuda_device_count = str(torch.cuda.device_count())
+
+    return {
+        "benchmark_label": label,
+        "python": platform.python_version(),
+        "platform": platform.platform(),
+        "torch": torch.__version__,
+        "torch_cuda": str(torch.version.cuda),
+        "cuda_available": str(torch.cuda.is_available()),
+        "cuda_device_count": cuda_device_count,
+        "gpu_name": gpu_name,
+    }
+
+
 def evaluate_model(
+    benchmark_label: str,
     device_name: str,
     name: str,
     model: nn.Module,
@@ -124,6 +147,7 @@ def evaluate_model(
         metrics = binary_classification_metrics(logits, y_test)
 
     return {
+        "benchmark_label": benchmark_label,
         "device": device_name,
         "model": name,
         "accuracy": metrics.accuracy,
@@ -152,6 +176,7 @@ def resolve_devices(mode: str) -> list[str]:
 
 
 def run_for_device(
+    benchmark_label: str,
     device_name: str,
     x: torch.Tensor,
     y: torch.Tensor,
@@ -171,16 +196,24 @@ def run_for_device(
         model = model.to(device_name)
         reset_peak_memory(device_name)
         trained_model = train_model(model, x_train, y_train, epochs, learning_rate)
-        rows.append(evaluate_model(device_name, name, trained_model, x_test, y_test))
+        rows.append(evaluate_model(benchmark_label, device_name, name, trained_model, x_test, y_test))
     return rows
 
 
+def print_environment(summary: dict[str, str]) -> None:
+    print("## Environment")
+    for key, value in summary.items():
+        print(f"{key}: {value}")
+    print()
+
+
 def print_markdown_table(rows: list[dict[str, float | int | str]]) -> None:
-    print("| Device | Model | Accuracy | Precision | Recall | F1 | Parameters | Model size MB | Peak memory MB |")
-    print("|---|---|---:|---:|---:|---:|---:|---:|---:|")
+    print("| Label | Device | Model | Accuracy | Precision | Recall | F1 | Parameters | Model size MB | Peak memory MB |")
+    print("|---|---|---|---:|---:|---:|---:|---:|---:|---:|")
     for row in rows:
         print(
-            f"| {row['device']} | "
+            f"| {row['benchmark_label']} | "
+            f"{row['device']} | "
             f"{row['model']} | "
             f"{row['accuracy']:.4f} | "
             f"{row['precision']:.4f} | "
@@ -203,6 +236,11 @@ def main() -> None:
         default="both",
         help="Run on CPU, CUDA GPU, or both. Default runs CPU and GPU when CUDA is available.",
     )
+    parser.add_argument(
+        "--label",
+        default="local-run",
+        help="Benchmark label, for example cpu-baseline, cuda-12-old, or cuda-13-latest.",
+    )
     args = parser.parse_args()
 
     x, y = load_dataset(args.csv)
@@ -210,8 +248,9 @@ def main() -> None:
 
     all_results = []
     for device_name in devices:
-        all_results.extend(run_for_device(device_name, x, y, args.epochs, args.learning_rate))
+        all_results.extend(run_for_device(args.label, device_name, x, y, args.epochs, args.learning_rate))
 
+    print_environment(environment_summary(args.label))
     print("Rows:", x.shape[0])
     print("Fraud labels:", int(y.sum().item()))
     print("Devices evaluated:", ", ".join(devices))
