@@ -49,5 +49,23 @@ pyg-elliptic:
 docker-build:
 	docker build -f Dockerfile.cuda13 -t cuda13-graph-ai-fraud-detection:latest .
 
+docker-build-cuda13:
+	docker build -f Dockerfile.cuda13 -t cuda13-graph-ai-fraud-detection:cuda13 .
+
+docker-build-cuda12:
+	docker build -f Dockerfile.cuda12 -t cuda13-graph-ai-fraud-detection:cuda12 .
+
 docker-smoke:
 	docker run --rm --gpus all cuda13-graph-ai-fraud-detection:latest
+
+docker-smoke-cuda13:
+	docker run --rm --gpus all cuda13-graph-ai-fraud-detection:cuda13
+
+docker-smoke-cuda12:
+	docker run --rm --gpus all cuda13-graph-ai-fraud-detection:cuda12
+
+docker-benchmark-cuda13:
+	docker run --rm --gpus all -v $(PWD)/data:/app/data cuda13-graph-ai-fraud-detection:cuda13 python3 benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device cuda --label cuda-13-latest
+
+docker-benchmark-cuda12:
+	docker run --rm --gpus all -v $(PWD)/data:/app/data cuda13-graph-ai-fraud-detection:cuda12 python3 benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device cuda --label cuda-12-old
