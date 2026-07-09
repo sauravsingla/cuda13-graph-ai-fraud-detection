@@ -4,7 +4,7 @@ This repository does not commit public datasets directly. Download datasets from
 
 ## Option 1: ULB/Kaggle Credit Card Fraud Detection
 
-Use this dataset when you want a quick tabular fraud-detection example.
+Use this dataset when you want a quick tabular fraud-detection example and a model quality / memory-footprint benchmark.
 
 Expected path:
 
@@ -18,7 +18,7 @@ Expected columns:
 Time, V1, V2, ..., V28, Amount, Class
 ```
 
-Run:
+Run the compact single-model example:
 
 ```bash
 python examples/public_creditcard_fraud_gpu.py --csv data/creditcard.csv
@@ -30,12 +30,25 @@ Or:
 make creditcard
 ```
 
+Run the model quality and memory benchmark:
+
+```bash
+python benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv
+```
+
+Or:
+
+```bash
+make benchmark
+```
+
 Notes:
 
-- The example trains a small PyTorch logistic classifier.
+- The example trains a compact PyTorch logistic classifier.
+- The benchmark compares compact and wider models.
 - It uses GPU automatically when CUDA is available.
 - It uses positive-class weighting to handle fraud-class imbalance.
-- It prints accuracy, precision, and recall.
+- It reports accuracy, precision, recall, F1, parameter count, model size, and peak CUDA memory.
 
 ## Option 2: Elliptic Bitcoin Transaction Graph Dataset
 
@@ -86,7 +99,7 @@ Notes:
 - It computes GPU-friendly in-degree and out-degree features.
 - The cuGraph example computes PageRank and degree features on GPU.
 - The PyG example trains a simple GraphSAGE node-classification baseline on known labels.
-- This is a starting point for graph neural networks, cuGraph, or temporal graph methods.
+- Future benchmark results should report accuracy, parameters, model size, and peak CUDA memory, not only speed.
 
 ## Why datasets are not committed
 
