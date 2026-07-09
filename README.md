@@ -19,13 +19,14 @@ Fraud and mule-risk detection systems need models that are accurate, explainable
 - GPU smoke test
 - CPU vs GPU model-quality and model-footprint benchmark
 - Benchmark matrix for CPU, older CUDA GPU, and latest CUDA GPU environments
+- Benchmark `--output` option for saving measured results
 - Synthetic transaction graph generator
 - Public credit-card fraud dataset example
 - Public Elliptic Bitcoin transaction graph loader
 - RAPIDS cuGraph example for GPU graph analytics
 - PyTorch Geometric GraphSAGE baseline
-- GPU-accelerated anomaly scoring example
 - CI workflow for CPU validation
+- Self-hosted GPU runner guide
 - Kubernetes GPU deployment reference
 - MLOps-friendly project structure
 
@@ -42,7 +43,7 @@ Fraud and mule-risk detection systems need models that are accurate, explainable
 | OS | Ubuntu 24.04 recommended |
 | Docker | NVIDIA Container Toolkit required for GPU runtime |
 
-See [`docs/cuda-version-support.md`](docs/cuda-version-support.md) for CUDA 13.3 Update 1 validation notes, component versions, and driver guidance.
+See [`docs/cuda-version-support.md`](docs/cuda-version-support.md) for CUDA 12 vs CUDA 13 validation notes, component versions, and driver guidance.
 
 ## Quick start
 
@@ -107,6 +108,7 @@ make docker-build-cuda12
 make docker-build-cuda13
 make docker-benchmark-cuda12
 make docker-benchmark-cuda13
+make benchmark-all-docker
 make creditcard
 make elliptic
 make rapids-elliptic
@@ -142,31 +144,28 @@ GPU with older CUDA environment, recommended label: cuda-12-old
 GPU with latest CUDA 13.3 / 13.3 Update 1 aligned environment, label: cuda-13-latest
 ```
 
-Run CPU baseline:
+Run CPU baseline and save output:
 
 ```bash
-python benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device cpu --label cpu-baseline
+python benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device cpu --label cpu-baseline --output benchmarks/measured/cpu-baseline.md
 ```
 
-Run older CUDA GPU environment:
+Run older CUDA GPU environment and save output:
 
 ```bash
-python benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device cuda --label cuda-12-old
+python benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device cuda --label cuda-12-old --output benchmarks/measured/cuda-12-old.md
 ```
 
-Run latest CUDA GPU environment:
+Run latest CUDA GPU environment and save output:
 
 ```bash
-python benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device cuda --label cuda-13-latest
+python benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device cuda --label cuda-13-latest --output benchmarks/measured/cuda-13-latest.md
 ```
 
 Run Docker-based CUDA comparison:
 
 ```bash
-make docker-build-cuda12
-make docker-build-cuda13
-make docker-benchmark-cuda12
-make docker-benchmark-cuda13
+make benchmark-all-docker
 ```
 
 This compares a compact logistic fraud model against a wider MLP and reports only the common benchmark metrics across CPU, older CUDA GPU, and latest CUDA GPU environments.
@@ -229,6 +228,10 @@ python examples/pyg_gnn_elliptic_baseline.py --data-dir data/elliptic_bitcoin_da
 
 More details: [`docs/public-datasets.md`](docs/public-datasets.md)
 
+## GPU runner automation
+
+Use [`docs/self-hosted-gpu-runner.md`](docs/self-hosted-gpu-runner.md) to configure a self-hosted NVIDIA GPU runner for automated CUDA 12 and CUDA 13 benchmarks.
+
 ## Architecture
 
 ```mermaid
@@ -277,6 +280,7 @@ cuda13-graph-ai-fraud-detection/
     cuda13-migration-notes.md
     cuda-version-support.md
     public-datasets.md
+    self-hosted-gpu-runner.md
   k8s/
     gpu-deployment.yaml
   tests/
@@ -307,7 +311,6 @@ The synthetic data does not contain real payment data. Public datasets should be
 - [ ] Add public-dataset CPU vs GPU accuracy and F1 benchmark results
 - [ ] Add compact GNN model-footprint comparison
 - [ ] Add custom CUDA kernel example for graph feature extraction
-- [ ] Add self-hosted GitHub Actions GPU runner guide
 - [ ] Add Kubernetes autoscaling pattern for GPU inference
 - [ ] Add model monitoring dashboard
 
