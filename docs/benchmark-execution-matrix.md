@@ -6,7 +6,16 @@ This project reports measured benchmarks only after running the same dataset and
 2. GPU with an older CUDA environment
 3. GPU with the latest CUDA 13.3 / 13.3 Update 1 aligned environment
 
-The benchmark focus is **accuracy and memory footprint**, not raw runtime speed.
+The benchmark includes only metrics that can be produced consistently across all three environments:
+
+- accuracy
+- precision
+- recall
+- F1 score
+- parameter count
+- model size MB
+
+It excludes speed, peak CUDA memory, GPU utilization, and CUDA kernel timings.
 
 ## Dataset requirement
 
@@ -106,15 +115,15 @@ python -c "import torch; print(torch.__version__); print(torch.version.cuda); pr
 
 After actual runs, paste the measured output from the benchmark script into `benchmarks/results.md` using this shape:
 
-| Label | Device | Model | Accuracy | Precision | Recall | F1 | Parameters | Model size MB | Peak memory MB |
-|---|---|---|---:|---:|---:|---:|---:|---:|---:|
+| Label | Device | Model | Accuracy | Precision | Recall | F1 | Parameters | Model size MB |
+|---|---|---|---:|---:|---:|---:|---:|---:|
 
 Do not add rows until actual measured output is available.
 
 ## Interpretation guidance
 
 - Accuracy, precision, recall, and F1 should be broadly comparable across CPU and GPU for the same seed, dataset, model, and training settings.
-- Peak memory is expected to differ between CUDA 12 and CUDA 13 environments because framework, CUDA runtime, and driver behavior may differ.
+- Parameter count and model size are static and should remain identical across CPU, older CUDA GPU, and latest CUDA GPU environments.
 - The compact logistic model has 31 parameters and a 0.000118 MB parameter footprint.
 - The wider MLP has 12,289 parameters and a 0.046879 MB parameter footprint.
 - The wider MLP is about 396x larger than the compact logistic model by parameter count and serialized parameter footprint.
@@ -143,4 +152,4 @@ Docker image or VM image:
 
 ## Important honesty rule
 
-Do not publish accuracy, recall, F1, or CUDA memory numbers until the benchmark has been run in the stated environment. Static model footprint numbers can be published because they are derived directly from the model definitions.
+Do not publish accuracy, precision, recall, or F1 numbers until the benchmark has been run in the stated environment. Static model footprint numbers can be published because they are derived directly from the model definitions.
