@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cuda13-graph-ai
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cuda13-graph-ai
+  template:
+    metadata:
+      labels:
+        app: cuda13-graph-ai
+    spec:
+      containers:
+        - name: cuda13-graph-ai
+          image: cuda13-graph-ai-fraud-detection:latest
+          imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              nvidia.com/gpu: 1
+          command: ["python3", "examples/gpu_smoke_test.py"]
