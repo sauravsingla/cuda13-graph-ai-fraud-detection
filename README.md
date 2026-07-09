@@ -1,10 +1,16 @@
 # CUDA 13 Graph AI Fraud Detection
 
-CUDA 13 compatible GPU acceleration examples for graph-based fraud detection, anomaly scoring, and large-scale financial risk analytics.
+![CUDA](https://img.shields.io/badge/CUDA-13.x-green)
+![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
+![Docker](https://img.shields.io/badge/Docker-GPU%20Ready-blue)
+![CI](https://img.shields.io/badge/CI-GitHub%20Actions-black)
+![License](https://img.shields.io/badge/License-Apache--2.0-lightgrey)
+
+CUDA 13 compatible GPU acceleration examples for graph-based fraud detection, anomaly scoring, public fraud datasets, and large-scale financial risk analytics.
 
 ## Why this project matters
 
-Fraud and mule-risk detection systems often need to process large transaction graphs quickly. This project demonstrates how CUDA 13.x can be used to accelerate graph feature extraction, anomaly scoring, benchmarking, and production-oriented AI workflows.
+Fraud and mule-risk detection systems often need to process large transaction graphs quickly. This project demonstrates how CUDA 13.x can be used to accelerate graph feature extraction, anomaly scoring, public-dataset experimentation, benchmarking, and production-oriented AI workflows.
 
 ## Features
 
@@ -12,6 +18,8 @@ Fraud and mule-risk detection systems often need to process large transaction gr
 - GPU smoke test
 - CPU vs GPU benchmark
 - Synthetic transaction graph generator
+- Public credit-card fraud dataset example
+- Public Elliptic Bitcoin transaction graph loader
 - GPU-accelerated anomaly scoring example
 - CI workflow for CPU validation
 - Kubernetes GPU deployment reference
@@ -68,6 +76,52 @@ python examples/graph_feature_gpu.py
 python benchmarks/cpu_vs_gpu_benchmark.py
 ```
 
+## Public dataset examples
+
+This repository does not commit datasets directly. Download each dataset from its official public source and place it under `data/`.
+
+### Credit-card fraud dataset
+
+Expected file:
+
+```text
+data/creditcard.csv
+```
+
+Run:
+
+```bash
+python examples/public_creditcard_fraud_gpu.py --csv data/creditcard.csv
+```
+
+This trains a small GPU-friendly PyTorch logistic classifier and reports accuracy, precision, and recall.
+
+### Elliptic Bitcoin graph dataset
+
+Expected directory:
+
+```text
+data/elliptic_bitcoin_dataset/
+```
+
+Expected files:
+
+```text
+elliptic_txs_features.csv
+elliptic_txs_classes.csv
+elliptic_txs_edgelist.csv
+```
+
+Run:
+
+```bash
+python examples/elliptic_graph_loader.py --data-dir data/elliptic_bitcoin_dataset
+```
+
+This loads node features, labels, and directed transaction edges, then computes GPU-friendly in-degree and out-degree features.
+
+More details: [`docs/public-datasets.md`](docs/public-datasets.md)
+
 ## Project structure
 
 ```text
@@ -75,16 +129,20 @@ cuda13-graph-ai-fraud-detection/
   README.md
   Dockerfile.cuda13
   requirements.txt
+  LICENSE
   examples/
     gpu_smoke_test.py
     graph_feature_gpu.py
     anomaly_score_gpu.py
+    public_creditcard_fraud_gpu.py
+    elliptic_graph_loader.py
   benchmarks/
     cpu_vs_gpu_benchmark.py
     results.md
   docs/
     architecture.md
     cuda13-migration-notes.md
+    public-datasets.md
   k8s/
     gpu-deployment.yaml
   tests/
@@ -95,15 +153,16 @@ cuda13-graph-ai-fraud-detection/
 
 ## Use case
 
-This repository uses a synthetic transaction graph to demonstrate GPU-friendly patterns for:
+This repository uses synthetic and public fraud-style datasets to demonstrate GPU-friendly patterns for:
 
 - graph feature extraction
 - suspicious node scoring
 - transaction anomaly scoring
 - mule-risk style network analytics
+- public fraud dataset experimentation
 - CPU vs GPU benchmarking
 
-The data is synthetic and does not contain real payment data.
+The synthetic data does not contain real payment data. Public datasets should be downloaded separately according to their own terms of use.
 
 ## Contribution roadmap
 
@@ -113,6 +172,7 @@ The data is synthetic and does not contain real payment data.
 - [ ] Add self-hosted GitHub Actions GPU runner guide
 - [ ] Add Kubernetes autoscaling pattern for GPU inference
 - [ ] Add model monitoring dashboard
+- [ ] Add benchmark results from public datasets
 
 ## Suggested GitHub topics
 
