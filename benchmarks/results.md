@@ -66,31 +66,40 @@ The following metrics are intentionally not published in this file until the ben
 
 ## Required benchmark runs
 
-Run CPU baseline:
+Run CPU baseline and save output:
 
 ```bash
 python benchmarks/model_quality_memory_benchmark.py \
   --csv data/creditcard.csv \
   --device cpu \
-  --label cpu-baseline
+  --label cpu-baseline \
+  --output benchmarks/measured/cpu-baseline.md
 ```
 
-Run older CUDA GPU benchmark:
+Run older CUDA GPU benchmark and save output:
 
 ```bash
 python benchmarks/model_quality_memory_benchmark.py \
   --csv data/creditcard.csv \
   --device cuda \
-  --label cuda-12-old
+  --label cuda-12-old \
+  --output benchmarks/measured/cuda-12-old.md
 ```
 
-Run latest CUDA GPU benchmark:
+Run latest CUDA GPU benchmark and save output:
 
 ```bash
 python benchmarks/model_quality_memory_benchmark.py \
   --csv data/creditcard.csv \
   --device cuda \
-  --label cuda-13-latest
+  --label cuda-13-latest \
+  --output benchmarks/measured/cuda-13-latest.md
+```
+
+Run Docker-based CUDA comparison:
+
+```bash
+make benchmark-all-docker
 ```
 
 ## Final result format after real runs
@@ -101,6 +110,22 @@ After the benchmark is executed in the three target environments, paste the meas
 |---|---|---|---:|---:|---:|---:|---:|---:|
 
 Do not add rows to this table until actual measured output is available.
+
+## Measured output files
+
+The benchmark script supports `--output` and the Makefile writes benchmark artifacts under:
+
+```text
+benchmarks/measured/
+```
+
+Expected files after real runs:
+
+```text
+benchmarks/measured/cpu-baseline.md
+benchmarks/measured/cuda-12-old.md
+benchmarks/measured/cuda-13-latest.md
+```
 
 ## Required reporting metadata
 
