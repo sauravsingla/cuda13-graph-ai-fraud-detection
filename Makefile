@@ -1,12 +1,21 @@
 PYTHON ?= python
 RESULT_DIR ?= benchmarks/measured
 
+.PHONY: install lint test smoke synthetic-graph score benchmark benchmark-cpu benchmark-gpu \
+	benchmark-cuda-old benchmark-cuda-latest quality-memory creditcard elliptic \
+	rapids-elliptic pyg-elliptic docker-build docker-build-cuda13 docker-build-cuda12 \
+	docker-smoke docker-smoke-cuda13 docker-smoke-cuda12 docker-benchmark-cuda13 \
+	docker-benchmark-cuda12 benchmark-all-docker
+
 install:
 	$(PYTHON) -m pip install --upgrade pip
-	$(PYTHON) -m pip install -r requirements.txt
+	$(PYTHON) -m pip install -e ".[dev]"
+
+lint:
+	ruff check benchmarks/model_quality_memory_benchmark.py examples src tests
 
 test:
-	pytest tests/
+	pytest
 
 smoke:
 	$(PYTHON) examples/gpu_smoke_test.py
@@ -80,7 +89,7 @@ docker-benchmark-cuda12:
 	docker run --rm --gpus all -v $(PWD)/data:/app/data -v $(PWD)/$(RESULT_DIR):/app/$(RESULT_DIR) cuda13-graph-ai-fraud-detection:cuda12 python3 benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device cuda --label cuda-12-old --output $(RESULT_DIR)/cuda-12-old.md
 
 benchmark-all-docker:
-	make docker-build-cuda12
-	make docker-build-cuda13
-	make docker-benchmark-cuda12
-	make docker-benchmark-cuda13
+	$(MAKE) docker-build-cuda12
+	$(MAKE) docker-build-cuda13
+	$(MAKE) docker-benchmark-cuda12
+	$(MAKE) docker-benchmark-cuda13
