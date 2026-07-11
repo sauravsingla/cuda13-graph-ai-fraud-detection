@@ -1,19 +1,39 @@
-"""Synthetic transaction graph feature extraction using torch.
-
-This example keeps data synthetic and demonstrates GPU-friendly feature aggregation.
-"""
+"""Synthetic transaction graph feature extraction using torch."""
 
 import torch
 
 
-def generate_synthetic_edges(num_nodes: int = 100_000, num_edges: int = 1_000_000, device: str = "cpu"):
+def generate_synthetic_edges(
+    num_nodes: int = 100_000,
+    num_edges: int = 1_000_000,
+    device: str = "cpu",
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    if num_nodes <= 0:
+        raise ValueError("num_nodes must be positive")
+    if num_edges < 0:
+        raise ValueError("num_edges cannot be negative")
+
     src = torch.randint(0, num_nodes, (num_edges,), device=device)
     dst = torch.randint(0, num_nodes, (num_edges,), device=device)
     amount = torch.rand(num_edges, device=device) * 10_000
     return src, dst, amount
 
 
-def aggregate_node_features(num_nodes: int, src: torch.Tensor, dst: torch.Tensor, amount: torch.Tensor):
+def aggregate_node_features(
+    num_nodes: int,
+    src: torch.Tensor,
+    dst: torch.Tensor,
+    amount: torch.Tensor,
+) -> torch.Tensor:
+    if num_nodes <= 0:
+        raise ValueError("num_nodes must be positive")
+    if src.ndim != 1 or dst.ndim != 1 or amount.ndim != 1:
+        raise ValueError("src, dst, and amount must be one-dimensional")
+    if not (src.numel() == dst.numel() == amount.numel()):
+        raise ValueError("src, dst, and amount must have the same length")
+    if src.numel() and (src.min() < 0 or dst.min() < 0 or src.max() >= num_nodes or dst.max() >= num_nodes):
+        raise ValueError("edge indices must be within the node range")
+
     out_degree = torch.zeros(num_nodes, device=amount.device)
     in_degree = torch.zeros(num_nodes, device=amount.device)
     out_amount = torch.zeros(num_nodes, device=amount.device)
