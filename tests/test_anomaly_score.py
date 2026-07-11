@@ -1,3 +1,4 @@
+import pytest
 import torch
 
 from examples.anomaly_score_gpu import robust_z_score, score_nodes
@@ -32,3 +33,18 @@ def test_score_nodes_ranks_large_outlier_first():
 
     assert int(torch.argmax(scores).item()) == 3
     assert scores[3] > scores[:3].max()
+
+
+def test_robust_z_score_rejects_vector_input():
+    with pytest.raises(ValueError, match="two-dimensional"):
+        robust_z_score(torch.tensor([1.0, 2.0]))
+
+
+def test_robust_z_score_rejects_empty_input():
+    with pytest.raises(ValueError, match="at least one row"):
+        robust_z_score(torch.empty((0, 3)))
+
+
+def test_robust_z_score_requires_positive_epsilon():
+    with pytest.raises(ValueError, match="positive"):
+        robust_z_score(torch.ones((2, 2)), eps=0.0)
