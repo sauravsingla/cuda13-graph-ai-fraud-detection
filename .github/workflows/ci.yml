@@ -33,8 +33,20 @@ jobs:
       - name: Lint maintained Python modules
         run: ruff check benchmarks/model_quality_memory_benchmark.py src tests
 
-      - name: Run tests
-        run: pytest
+      - name: Test metrics
+        run: pytest tests/test_metrics.py
+
+      - name: Test benchmark preprocessing
+        run: pytest tests/test_benchmark_preprocessing.py
+
+      - name: Test graph features
+        run: pytest tests/test_graph_features.py
+
+      - name: Test anomaly scoring
+        run: pytest tests/test_anomaly_score.py
+
+      - name: Test CPU fallback
+        run: pytest tests/test_cpu_fallback.py
 
       - name: Run CPU fallback smoke test
         run: python examples/gpu_smoke_test.py
