@@ -4,9 +4,16 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   cpu-tests:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
 
     steps:
       - name: Checkout repository
@@ -15,15 +22,31 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: ${{ matrix.python-version }}
+          cache: pip
 
-      - name: Install dependencies
+      - name: Install project
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -e ".[dev]"
 
-      - name: Run tests
-        run: pytest tests/
+      - name: Lint maintained Python modules
+        run: ruff check benchmarks/model_quality_memory_benchmark.py src tests
+
+      - name: Test metrics
+        run: pytest tests/test_metrics.py
+
+      - name: Test benchmark preprocessing
+        run: pytest tests/test_benchmark_preprocessing.py
+
+      - name: Test graph features
+        run: pytest tests/test_graph_features.py
+
+      - name: Test anomaly scoring
+        run: pytest tests/test_anomaly_score.py
+
+      - name: Test CPU fallback
+        run: pytest tests/test_cpu_fallback.py
 
       - name: Run CPU fallback smoke test
         run: python examples/gpu_smoke_test.py
