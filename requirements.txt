@@ -1,4 +1,3 @@
-torch
-numpy
-pandas
-pytest
+numpy>=1.26,<3
+pandas>=2.1,<3
+torch>=2.3,<3
