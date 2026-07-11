@@ -31,6 +31,16 @@ Expected columns:
 Time, V1, V2, ..., V28, Amount, Class
 ```
 
+## Split and preprocessing
+
+The benchmark uses a deterministic stratified random holdout. Both the training and test partitions contain legitimate and fraud rows, provided each class has at least two records.
+
+Feature means and standard deviations are fitted on the training partition only. The held-out partition is transformed with those training statistics and does not influence preprocessing.
+
+Keep the same `--seed`, training ratio, dataset file, epochs, and learning rate for every environment being compared. The current command-line default seed is `42`.
+
+A random holdout is useful for checking implementation parity across CPU and CUDA environments. It should not be treated as a production backtest. For deployment studies, use a separate time-ordered evaluation that reflects the intended scoring window.
+
 ## Static model footprint values
 
 These values are already known because they come directly from the model definitions:
@@ -139,6 +149,7 @@ Do not add rows until actual measured output is available.
 - The compact logistic model has 31 parameters and a 0.000118 MB parameter footprint.
 - The wider MLP has 12,289 parameters and a 0.046879 MB parameter footprint.
 - The wider MLP is about 396x larger than the compact logistic model by parameter count and serialized parameter footprint.
+- Accuracy can look strong on an imbalanced dataset even when fraud recall is weak. Read precision, recall, and F1 together.
 
 ## Required reporting metadata
 
@@ -149,6 +160,8 @@ Dataset source/version:
 Rows:
 Fraud labels:
 Train/test split:
+Random seed:
+Normalization method:
 Epochs:
 Learning rate:
 CPU model:
