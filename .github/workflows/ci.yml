@@ -31,30 +31,10 @@ jobs:
           pip install -e ".[dev]"
 
       - name: Lint maintained Python modules
-        run: |
-          ruff check \
-            benchmarks/model_quality_memory_benchmark.py \
-            examples/public_creditcard_fraud_gpu.py \
-            src \
-            tests
+        run: ruff check benchmarks examples src tests
 
-      - name: Test metrics
-        run: pytest tests/test_metrics.py
-
-      - name: Test benchmark preprocessing
-        run: pytest tests/test_benchmark_preprocessing.py
-
-      - name: Test credit card example
-        run: pytest tests/test_creditcard_example.py
-
-      - name: Test graph features
-        run: pytest tests/test_graph_features.py
-
-      - name: Test anomaly scoring
-        run: pytest tests/test_anomaly_score.py
-
-      - name: Test CPU fallback
-        run: pytest tests/test_cpu_fallback.py
+      - name: Run tests
+        run: pytest
 
       - name: Run CPU fallback smoke test
         run: python examples/gpu_smoke_test.py
