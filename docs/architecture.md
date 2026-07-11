@@ -1,6 +1,6 @@
 # Architecture
 
-This project demonstrates a CUDA 13 compatible architecture for graph AI experimentation with a focus on model quality and memory footprint.
+This repository contains small CPU and CUDA examples for graph-based fraud experimentation. The components are intentionally independent so they can be run without treating the repository as a single deployment platform.
 
 ## Flow
 
@@ -8,27 +8,26 @@ This project demonstrates a CUDA 13 compatible architecture for graph AI experim
 Public or synthetic dataset
         |
         v
-Graph / tabular loader
+Graph or tabular loader
         |
-        +--> CUDA/PyTorch tensor features
+        +--> PyTorch tensor features
         |
-        +--> RAPIDS cuGraph graph features
+        +--> RAPIDS cuGraph features
         |
         +--> PyTorch Geometric GraphSAGE baseline
         |
         v
-Fraud / anomaly model
+Classification or anomaly score
         |
         v
-Model quality and memory-footprint benchmark
-        |
-        v
-Docker and Kubernetes deployment reference
+Quality and model-footprint output
 ```
 
-## Benchmark focus
+Dockerfiles provide CUDA 12 and CUDA 13 execution environments. The Kubernetes manifest is a minimal GPU scheduling reference for the smoke test; it is not a complete serving deployment.
 
-The benchmark layer focuses on:
+## Benchmark scope
+
+The cross-environment benchmark reports:
 
 - accuracy
 - precision
@@ -36,25 +35,22 @@ The benchmark layer focuses on:
 - F1 score
 - parameter count
 - model size in MB
-- peak CUDA memory in MB when CUDA is available
 
-Raw speed is not the primary benchmark target for this repository.
+Runtime, throughput, GPU utilization, and kernel timing are outside the current benchmark. The credit-card example separately reports peak allocated CUDA memory when it runs on a GPU.
 
-## Design principles
+## Design choices
 
 - Use public datasets or clearly synthetic data.
-- Do not commit datasets directly to the repository.
-- Prefer compact models when they maintain strong recall and F1.
-- Track model size and memory footprint alongside model quality.
-- Support CPU fallback for CI.
-- Use Docker for CUDA 13 runtime consistency.
-- Keep GPU tests runnable locally or on self-hosted GPU runners.
+- Keep datasets outside the repository.
+- Fit tabular preprocessing on training rows only.
+- Use deterministic splits for reproducible comparisons.
+- Keep CPU tests available for shared logic.
+- Record environment details with measured GPU results.
 
-## Production extension ideas
+## Possible extensions
 
-- Add model registry integration.
-- Add model cards for benchmarked models.
-- Add drift monitoring for score distributions.
-- Add compact GNN memory comparisons.
-- Add graph neural network inference.
-- Add Kubernetes autoscaling patterns.
+- time-ordered evaluation for fraud datasets
+- compact GNN footprint comparisons
+- model registry and model-card examples
+- score-distribution monitoring
+- GPU inference serving and autoscaling examples
