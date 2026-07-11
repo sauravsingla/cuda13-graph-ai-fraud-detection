@@ -1,18 +1,23 @@
-"""Synthetic anomaly scoring example for transaction graph node features."""
+"""Synthetic anomaly scoring for transaction graph node features."""
 
 import torch
 
 
 def robust_z_score(x: torch.Tensor, eps: float = 1e-6) -> torch.Tensor:
+    if x.ndim != 2:
+        raise ValueError("x must be a two-dimensional feature matrix")
+    if x.shape[0] == 0:
+        raise ValueError("x must contain at least one row")
+    if eps <= 0:
+        raise ValueError("eps must be positive")
+
     median = x.median(dim=0).values
     mad = (x - median).abs().median(dim=0).values
     return (x - median) / (mad + eps)
 
 
 def score_nodes(features: torch.Tensor) -> torch.Tensor:
-    z = robust_z_score(features)
-    score = z.abs().mean(dim=1)
-    return score
+    return robust_z_score(features).abs().mean(dim=1)
 
 
 def main() -> None:
