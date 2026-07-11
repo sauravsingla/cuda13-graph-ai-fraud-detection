@@ -1,322 +1,158 @@
-# CUDA 13 Graph AI Fraud Detection
+# CUDA 13 Graph Fraud Detection Examples
 
 ![CUDA](https://img.shields.io/badge/CUDA-13.x-green)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
-![Docker](https://img.shields.io/badge/Docker-GPU%20Ready-blue)
 ![CI](https://img.shields.io/badge/CI-GitHub%20Actions-black)
 ![License](https://img.shields.io/badge/License-Apache--2.0-lightgrey)
 
-CUDA 13 compatible GPU examples for graph-based fraud detection, anomaly scoring, public fraud datasets, model quality benchmarking, and model-footprint comparison.
+Small, reproducible examples for graph-based fraud analysis across CPU and CUDA environments.
 
-## Why this project matters
+The repository covers synthetic transaction graphs, anomaly scoring, a credit-card fraud baseline, Elliptic dataset loaders, cuGraph and PyTorch Geometric examples, and a simple CPU/CUDA benchmark path. It is an experimentation repository, not a production fraud platform.
 
-Fraud and mule-risk detection systems need models that are accurate, explainable, and efficient enough for production deployment. This project demonstrates how CUDA 13.x, PyTorch, RAPIDS cuGraph, and PyTorch Geometric can support graph feature extraction, anomaly scoring, CPU-vs-GPU model-quality evaluation, model-footprint analysis, and production-oriented AI workflows.
+## What is included
 
-## Features
-
-- CUDA 13 Docker environment
-- CUDA 12 older-version Docker environment for comparison
-- GPU smoke test
-- CPU vs GPU model-quality and model-footprint benchmark
-- Benchmark matrix for CPU, older CUDA GPU, and latest CUDA GPU environments
-- Benchmark `--output` option for saving measured results
-- Synthetic transaction graph generator
-- Public credit-card fraud dataset example
-- Public Elliptic Bitcoin transaction graph loader
-- RAPIDS cuGraph example for GPU graph analytics
-- PyTorch Geometric GraphSAGE baseline
-- CI workflow for CPU validation
-- Self-hosted GPU runner guide
+- CUDA 12 and CUDA 13 Dockerfiles
+- CPU-compatible tests and smoke checks
+- synthetic graph feature aggregation and anomaly scoring
+- credit-card fraud classification example
+- Elliptic Bitcoin transaction graph loaders
+- cuGraph and GraphSAGE examples
+- benchmark output in Markdown format
+- self-hosted GPU runner notes
 - Kubernetes GPU deployment reference
-- MLOps-friendly project structure
 
-## Tested stack
+## Environment
 
-| Component | Version |
+| Component | Version or requirement |
 |---|---|
-| CUDA target | 13.x |
-| Latest CUDA alignment | CUDA Toolkit 13.3 / 13.3 Update 1 notes |
-| Latest CUDA Docker image | `nvidia/cuda:13.3.0-devel-ubuntu24.04` |
-| Older CUDA comparison image | `nvidia/cuda:12.6.3-devel-ubuntu24.04` |
-| NVIDIA Driver | `>=580` for CUDA 13.x compatibility; `>=610.43.02` preferred for CUDA 13.3 / 13.3 Update 1 alignment |
 | Python | 3.10+ |
+| CUDA target | 13.x |
+| CUDA 13 image | `nvidia/cuda:13.3.0-devel-ubuntu24.04` |
+| CUDA 12 comparison image | `nvidia/cuda:12.6.3-devel-ubuntu24.04` |
 | OS | Ubuntu 24.04 recommended |
-| Docker | NVIDIA Container Toolkit required for GPU runtime |
+| GPU runtime | NVIDIA Container Toolkit |
 
-See [`docs/cuda-version-support.md`](docs/cuda-version-support.md) for CUDA 12 vs CUDA 13 validation notes, component versions, and driver guidance.
+Driver and compatibility notes are in [`docs/cuda-version-support.md`](docs/cuda-version-support.md).
 
-## Quick start
-
-### 1. Verify GPU and CUDA
-
-```bash
-nvidia-smi
-nvcc --version
-```
-
-### 2. Build Docker images
-
-Latest CUDA 13 image:
-
-```bash
-docker build -f Dockerfile.cuda13 -t cuda13-graph-ai-fraud-detection:cuda13 .
-```
-
-Older CUDA 12 comparison image:
-
-```bash
-docker build -f Dockerfile.cuda12 -t cuda13-graph-ai-fraud-detection:cuda12 .
-```
-
-### 3. Run GPU smoke tests
-
-```bash
-docker run --rm --gpus all cuda13-graph-ai-fraud-detection:cuda13
-docker run --rm --gpus all cuda13-graph-ai-fraud-detection:cuda12
-```
-
-Expected output:
-
-```text
-CUDA available: True
-GPU test passed
-```
-
-## Run locally without Docker
+## Local setup
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install --upgrade pip
-pip install -r requirements.txt
-python examples/gpu_smoke_test.py
-python examples/graph_feature_gpu.py
-python benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device both
+python -m pip install --upgrade pip
+pip install -e ".[dev]"
 ```
 
-Common commands are also available through `make`:
+Run the CPU checks:
 
 ```bash
-make install
-make test
-make smoke
-make benchmark
-make benchmark-cpu
-make benchmark-cuda-old
-make benchmark-cuda-latest
-make docker-build-cuda12
-make docker-build-cuda13
-make docker-benchmark-cuda12
-make docker-benchmark-cuda13
-make benchmark-all-docker
-make creditcard
-make elliptic
-make rapids-elliptic
-make pyg-elliptic
+ruff check benchmarks/model_quality_memory_benchmark.py src tests
+pytest
+python examples/gpu_smoke_test.py
 ```
 
-## Benchmark focus
+## Docker
 
-This repository benchmarks only metrics that can be produced consistently across all three benchmark environments: CPU, older CUDA GPU, and latest CUDA GPU.
+Build the CUDA 13 image:
 
-Included metrics:
+```bash
+docker build -f Dockerfile.cuda13 -t graph-fraud:cuda13 .
+docker run --rm --gpus all graph-fraud:cuda13
+```
+
+Build the CUDA 12 comparison image:
+
+```bash
+docker build -f Dockerfile.cuda12 -t graph-fraud:cuda12 .
+docker run --rm --gpus all graph-fraud:cuda12
+```
+
+## Examples
+
+Synthetic graph features:
+
+```bash
+python examples/graph_feature_gpu.py
+```
+
+Synthetic anomaly scoring:
+
+```bash
+python examples/anomaly_score_gpu.py
+```
+
+Credit-card fraud example:
+
+```bash
+python examples/public_creditcard_fraud_gpu.py --csv data/creditcard.csv
+```
+
+Elliptic dataset loader:
+
+```bash
+python examples/elliptic_graph_loader.py --data-dir data/elliptic_bitcoin_dataset
+```
+
+cuGraph and PyTorch Geometric examples require their respective environments:
+
+```bash
+python examples/rapids_cugraph_elliptic.py --data-dir data/elliptic_bitcoin_dataset
+python examples/pyg_gnn_elliptic_baseline.py --data-dir data/elliptic_bitcoin_dataset
+```
+
+Dataset download and licensing notes are in [`docs/public-datasets.md`](docs/public-datasets.md).
+
+## Benchmark
+
+The benchmark compares a compact logistic model with a wider MLP and reports metrics that can be reproduced across CPU and CUDA environments:
 
 - accuracy
 - precision
 - recall
 - F1 score
 - parameter count
-- model size in MB
+- model size
 
-Excluded metrics:
+It does not claim runtime, throughput, GPU utilization, or kernel-level comparisons.
 
-- runtime speed
-- peak CUDA memory
-- GPU utilization
-- CUDA kernel timing
-- throughput
+CPU run:
 
-Benchmark matrix:
+```bash
+python benchmarks/model_quality_memory_benchmark.py \
+  --csv data/creditcard.csv \
+  --device cpu \
+  --label cpu-baseline \
+  --output benchmarks/measured/cpu-baseline.md
+```
+
+CUDA run:
+
+```bash
+python benchmarks/model_quality_memory_benchmark.py \
+  --csv data/creditcard.csv \
+  --device cuda \
+  --label cuda-13-latest \
+  --output benchmarks/measured/cuda-13-latest.md
+```
+
+Use the same dataset, seed, epochs, and learning rate when comparing environments. The benchmark uses a deterministic stratified holdout and fits normalization statistics on training rows only. See [`docs/benchmark-execution-matrix.md`](docs/benchmark-execution-matrix.md).
+
+## Repository layout
 
 ```text
-CPU baseline
-GPU with older CUDA environment, recommended label: cuda-12-old
-GPU with latest CUDA 13.3 / 13.3 Update 1 aligned environment, label: cuda-13-latest
+benchmarks/   benchmark script and result templates
+docs/         setup, dataset, architecture, and compatibility notes
+examples/     runnable CPU, CUDA, cuGraph, and PyG examples
+k8s/          GPU deployment reference
+src/          shared metric helpers
+tests/        CPU-side regression tests
 ```
 
-Run CPU baseline and save output:
+## Data and results
 
-```bash
-python benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device cpu --label cpu-baseline --output benchmarks/measured/cpu-baseline.md
-```
+No payment data or public dataset files are committed. Synthetic examples are generated locally. Public datasets must be downloaded from their original sources and used under their own terms.
 
-Run older CUDA GPU environment and save output:
-
-```bash
-python benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device cuda --label cuda-12-old --output benchmarks/measured/cuda-12-old.md
-```
-
-Run latest CUDA GPU environment and save output:
-
-```bash
-python benchmarks/model_quality_memory_benchmark.py --csv data/creditcard.csv --device cuda --label cuda-13-latest --output benchmarks/measured/cuda-13-latest.md
-```
-
-Run Docker-based CUDA comparison:
-
-```bash
-make benchmark-all-docker
-```
-
-This compares a compact logistic fraud model against a wider MLP and reports only the common benchmark metrics across CPU, older CUDA GPU, and latest CUDA GPU environments.
-
-Full execution guide: [`docs/benchmark-execution-matrix.md`](docs/benchmark-execution-matrix.md)
-
-## Public dataset examples
-
-This repository does not commit datasets directly. Download each dataset from its official public source and place it under `data/`.
-
-### Credit-card fraud dataset
-
-Expected file:
-
-```text
-data/creditcard.csv
-```
-
-Run:
-
-```bash
-python examples/public_creditcard_fraud_gpu.py --csv data/creditcard.csv
-```
-
-This trains a compact GPU-friendly PyTorch classifier and reports accuracy, precision, recall, F1, parameter count, and model size.
-
-### Elliptic Bitcoin graph dataset
-
-Expected directory:
-
-```text
-data/elliptic_bitcoin_dataset/
-```
-
-Expected files:
-
-```text
-elliptic_txs_features.csv
-elliptic_txs_classes.csv
-elliptic_txs_edgelist.csv
-```
-
-Run the basic loader:
-
-```bash
-python examples/elliptic_graph_loader.py --data-dir data/elliptic_bitcoin_dataset
-```
-
-Run the RAPIDS cuGraph example in a RAPIDS environment:
-
-```bash
-python examples/rapids_cugraph_elliptic.py --data-dir data/elliptic_bitcoin_dataset
-```
-
-Run the PyTorch Geometric GraphSAGE baseline in a PyG environment:
-
-```bash
-python examples/pyg_gnn_elliptic_baseline.py --data-dir data/elliptic_bitcoin_dataset
-```
-
-More details: [`docs/public-datasets.md`](docs/public-datasets.md)
-
-## GPU runner automation
-
-Use [`docs/self-hosted-gpu-runner.md`](docs/self-hosted-gpu-runner.md) to configure a self-hosted NVIDIA GPU runner for automated CUDA 12 and CUDA 13 benchmarks.
-
-## Architecture
-
-```mermaid
-flowchart LR
-    A[Public or synthetic dataset] --> B[Graph loader]
-    B --> C[CPU model evaluation]
-    B --> D[Older CUDA GPU model evaluation]
-    B --> E[Latest CUDA GPU model evaluation]
-    B --> F[RAPIDS cuGraph features]
-    B --> G[PyTorch Geometric GNN baseline]
-    C --> H[Common quality and footprint metrics]
-    D --> H
-    E --> H
-    F --> H
-    G --> H
-    H --> I[Docker and Kubernetes deployment reference]
-```
-
-## Project structure
-
-```text
-cuda13-graph-ai-fraud-detection/
-  README.md
-  Dockerfile.cuda12
-  Dockerfile.cuda13
-  requirements.txt
-  Makefile
-  LICENSE
-  .gitignore
-  src/
-    metrics.py
-  examples/
-    gpu_smoke_test.py
-    graph_feature_gpu.py
-    anomaly_score_gpu.py
-    public_creditcard_fraud_gpu.py
-    elliptic_graph_loader.py
-    rapids_cugraph_elliptic.py
-    pyg_gnn_elliptic_baseline.py
-  benchmarks/
-    model_quality_memory_benchmark.py
-    results.md
-  docs/
-    architecture.md
-    benchmark-execution-matrix.md
-    cuda13-migration-notes.md
-    cuda-version-support.md
-    public-datasets.md
-    self-hosted-gpu-runner.md
-  k8s/
-    gpu-deployment.yaml
-  tests/
-    test_cpu_fallback.py
-  .github/workflows/
-    ci.yml
-```
-
-## Use case
-
-This repository uses synthetic and public fraud-style datasets to demonstrate GPU-friendly patterns for:
-
-- graph feature extraction
-- suspicious node scoring
-- transaction anomaly scoring
-- mule-risk style network analytics
-- public fraud dataset experimentation
-- CPU vs GPU accuracy, precision, recall, F1, parameter count, and model-size benchmarking
-- older CUDA vs latest CUDA GPU benchmark comparison
-- RAPIDS/cuGraph graph features
-- GraphSAGE baseline modeling
-
-The synthetic data does not contain real payment data. Public datasets should be downloaded separately according to their own terms of use.
-
-## Contribution roadmap
-
-- [ ] Add measured CPU baseline, old CUDA GPU, and latest CUDA GPU benchmark results
-- [ ] Add public-dataset CPU vs GPU accuracy and F1 benchmark results
-- [ ] Add compact GNN model-footprint comparison
-- [ ] Add custom CUDA kernel example for graph feature extraction
-- [ ] Add Kubernetes autoscaling pattern for GPU inference
-- [ ] Add model monitoring dashboard
-
-## Suggested GitHub topics
-
-`cuda`, `cuda-13`, `gpu-computing`, `graph-ai`, `fraud-detection`, `anomaly-detection`, `financial-crime`, `mlops`, `pytorch`, `docker`, `kubernetes`, `responsible-ai`, `rapids`, `cugraph`, `pytorch-geometric`, `model-compression`, `memory-efficient-ai`
+Benchmark numbers should be added only after an actual run in the stated environment, together with the GPU model, driver, CUDA runtime, PyTorch version, and exact command.
 
 ## License
 
